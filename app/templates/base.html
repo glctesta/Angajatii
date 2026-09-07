@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Employees Management') }} - {% block title %}{% endblock %}</title>
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.9"></script>
+    {% block head %}{% endblock %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token() }}"}'>
+    <div class="wrapper d-flex">
+        <!-- Sidebar -->
+        {% include 'components/sidebar.html' %}
+        
+        <div class="main-content flex-grow-1 d-flex flex-column" style="min-height: 100vh; overflow-x: hidden;">
+            <!-- Navbar -->
+            {% include 'components/navbar.html' %}
+            
+            <!-- Main Content Area -->
+            <main class="container-fluid p-4 flex-grow-1">
+                <!-- Breadcrumbs -->
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        {% block breadcrumb %}
+                        <li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+                        {% endblock %}
+                    </ol>
+                </nav>
+                
+                <!-- Flash Messages -->
+                {% include 'components/flash_messages.html' %}
+                
+                <!-- Content -->
+                {% block content %}{% endblock %}
+            </main>
+            
+            <!-- Footer -->
+            <footer class="footer mt-auto py-3 bg-light text-center border-top">
+                <div class="container">
+                    <span class="text-muted">{{ _('Employees Management v1.0 &copy; 2026') }}</span>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

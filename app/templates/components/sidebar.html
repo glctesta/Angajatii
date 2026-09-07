@@ -1,0 +1,43 @@
+<nav id="sidebar" class="sidebar bg-dark text-white" style="width: 250px; min-height: 100vh; transition: all 0.3s;">
+    <div class="sidebar-header d-flex align-items-center justify-content-center p-3 border-bottom border-secondary">
+        <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="{{ _('Logo') }}" class="logo-img" style="max-height: 40px;">
+        <span class="sidebar-title ms-2 fw-bold text-white">{{ _('Employees Mgmt') }}</span>
+    </div>
+    <div class="sidebar-menu p-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link text-white {% if active_page == 'dashboard' %}active bg-primary rounded{% endif %}" href="{{ url_for('dashboard.index') }}">
+                    <i class="bi bi-speedometer2 me-2"></i> <span>{{ _('Dashboard') }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if active_page == 'employees' %}active bg-primary rounded{% endif %}" href="#">
+                    <i class="bi bi-people me-2"></i> <span>{{ _('Dipendenti/Employees') }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if active_page == 'contracts' %}active bg-primary rounded{% endif %}" href="#">
+                    <i class="bi bi-file-earmark-text me-2"></i> <span>{{ _('Contratti/Contracts') }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if active_page == 'organization' %}active bg-primary rounded{% endif %}" href="#">
+                    <i class="bi bi-diagram-3 me-2"></i> <span>{{ _('Organizzazione') }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if active_page == 'needs' %}active bg-primary rounded{% endif %}" href="#">
+                    <i class="bi bi-graph-up-arrow me-2"></i> <span>{{ _('Fabbisogno/Needs') }}</span>
+                </a>
+            </li>
+            {% if current_user.is_authenticated and getattr(current_user, 'role', '') == 'admin' %}
+            <li class="nav-item mt-4">
+                <h6 class="sidebar-heading px-3 text-secondary text-uppercase" style="font-size: 0.8rem;">{{ _('Administration') }}</h6>
+                <a class="nav-link text-white {% if active_page == 'admin' %}active bg-primary rounded{% endif %}" href="#">
+                    <i class="bi bi-gear me-2"></i> <span>{{ _('Amministrazione') }}</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
