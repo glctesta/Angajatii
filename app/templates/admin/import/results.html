@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ _('Import Results') }}</h1>
+    <p>{{ _('This page shows the results of the last file import.') }}</p>
+    <a href="{{ url_for('admin.import_page') }}" class="btn btn-secondary">{{ _('Back to Import') }}</a>
+</div>
+{% endblock %}

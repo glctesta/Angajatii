@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ _('Audit Log') }}</h1>
+    <table class="table table-striped table-sm mt-3">
+        <thead>
+            <tr>
+                <th>{{ _('Timestamp') }}</th>
+                <th>{{ _('User') }}</th>
+                <th>{{ _('Action') }}</th>
+                <th>{{ _('Entity') }}</th>
+                <th>{{ _('Details') }}</th>
+                <th>{{ _('IP Address') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.Timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ log.user.Username if log.user else _('System') }}</td>
+                <td>{{ log.Action }}</td>
+                <td>{{ log.EntityType }} ({{ log.EntityId }})</td>
+                <td>{{ log.Details }}</td>
+                <td>{{ log.IpAddress }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

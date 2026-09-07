@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ _('Admin Dashboard') }}</h1>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Total Users') }}</h5>
+                    <p class="card-text fs-2">{{ user_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Quick Actions') }}</h5>
+                    <a href="{{ url_for('admin.import_page') }}" class="btn btn-primary">{{ _('Import Data') }}</a>
+                    <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary">{{ _('Manage Users') }}</a>
+                    <a href="{{ url_for('admin.audit_log') }}" class="btn btn-info">{{ _('Audit Log') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

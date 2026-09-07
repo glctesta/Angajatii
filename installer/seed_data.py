@@ -31,6 +31,7 @@ def seed_database():
 
     # 2. Seed Roles
     roles_data = [
+        {'name': 'superadmin',  'desc': 'Super Administrator - Full system access', 'sys': True},
         {'name': 'admin',       'desc': 'System Administrator',  'sys': True},
         {'name': 'hr_manager',  'desc': 'HR Manager',            'sys': True},
         {'name': 'hr_operator', 'desc': 'HR Operator',           'sys': True},

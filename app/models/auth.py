@@ -89,6 +89,7 @@ class User(Base, UserMixin):
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
     UpdatedAt: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    IsSuperAdmin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Relationships
     roles: Mapped[List["Role"]] = relationship(
@@ -160,7 +161,13 @@ class User(Base, UserMixin):
     def has_any_role(self, *role_names: str) -> bool:
         return any(r.RoleName in role_names for r in self.roles)
 
+    @property
+    def is_super_admin(self) -> bool:
+        return self.IsSuperAdmin
+
     def has_permission(self, permission_code: str) -> bool:
+        if self.IsSuperAdmin:
+            return True
         for role in self.roles:
             for perm in role.permissions:
                 if perm.PermissionCode == permission_code:

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ _('Import Data Options') }}</h1>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Import from Employee DB') }}</h5>
+                    <p class="card-text">{{ _('Sync data directly from the legacy SQL Server Database.') }}</p>
+                    <a href="{{ url_for('admin.import_employee_db') }}" class="btn btn-primary">{{ _('Start DB Import') }}</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Import from File') }}</h5>
+                    <p class="card-text">{{ _('Upload a CSV or JSON file to import data.') }}</p>
+                    <a href="{{ url_for('admin.import_file') }}" class="btn btn-primary">{{ _('Upload File') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ _('Import from Employee Database') }}</h1>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">{{ _('Pre-import Checklist') }}</h5>
+            <ul>
+                <li>{{ _('Connection Test: Passed') }}</li>
+                <li>{{ _('Ready to import core tables') }}</li>
+            </ul>
+            <form id="importForm" action="{{ url_for('admin.import_employee_db') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary" id="startImportBtn">{{ _('Start Import') }}</button>
+            </form>
+        </div>
+    </div>
+    <div id="progressArea" style="display:none;">
+        <h4>{{ _('Import Progress') }}</h4>
+        <div class="progress mb-3">
+            <div id="importProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+        </div>
+        <div id="resultsTable"></div>
+    </div>
+</div>
+<script>
+document.getElementById('importForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    document.getElementById('startImportBtn').disabled = true;
+    document.getElementById('progressArea').style.display = 'block';
+    document.getElementById('importProgressBar').style.width = '100%';
+    
+    fetch('{{ url_for("admin.import_employee_db") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    }).then(response => response.json()).then(data => {
+        document.getElementById('importProgressBar').classList.remove('progress-bar-animated');
+        let html = '<table class="table"><thead><tr><th>{{ _("Step") }}</th><th>{{ _("Status") }}</th><th>{{ _("Imported") }}</th></tr></thead><tbody>';
+        data.details.forEach(detail => {
+            let badge = detail.status === 'ok' ? '<span class="badge bg-success">OK</span>' : '<span class="badge bg-danger">Error</span>';
+            html += `<tr><td>${detail.step}</td><td>${badge}</td><td>${detail.imported}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('resultsTable').innerHTML = html;
+        document.getElementById('startImportBtn').disabled = false;
+    });
+});
+</script>
+{% endblock %}

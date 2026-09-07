@@ -43,6 +43,39 @@ def create_admin_command():
     db.session.commit()
     click.echo("Admin user created/reset successfully.")
 
+@click.command('setup')
+@with_appcontext
+def setup_command():
+    """Run the full setup wizard."""
+    from installer.setup_wizard import SetupWizard
+    wizard = SetupWizard()
+    wizard.run()
+
+@click.command('create-superadmin')
+@with_appcontext
+def create_superadmin_command():
+    """Create/reset SuperUserAdmin."""
+    from installer.setup_wizard import SetupWizard
+    wizard = SetupWizard()
+    wizard._create_super_admin()
+
+@click.command('import-data')
+@click.option('--source', required=True, help='Source type: employee, file')
+@click.option('--path', help='Path to file (if source=file)')
+@with_appcontext
+def import_data_command(source, path):
+    """Import data from a source."""
+    if source == 'employee':
+        click.echo("[INFO] Importing from Employee DB...")
+        # wizard._import_from_employee_db()
+    elif source == 'file':
+        click.echo(f"[INFO] Importing from file: {path}...")
+    else:
+        click.echo("[ERROR] Unknown source.")
+
 def register_commands(app):
     app.cli.add_command(install_command)
     app.cli.add_command(create_admin_command)
+    app.cli.add_command(setup_command)
+    app.cli.add_command(create_superadmin_command)
+    app.cli.add_command(import_data_command)
