@@ -11,8 +11,8 @@ app = create_app(env)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the Flask web application.')
-    parser.add_argument('--host', default='127.0.0.1', help='Host to bind to.')
-    parser.add_argument('--port', type=int, default=5000, help='Port to bind to.')
+    parser.add_argument('--host', default=os.environ.get('APP_HOST', '127.0.0.1'), help='Host to bind to.')
+    parser.add_argument('--port', type=int, default=int(os.environ.get('APP_PORT', 5050)), help='Port to bind to (default: 5050).')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode.')
     
     args = parser.parse_args()
