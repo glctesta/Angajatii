@@ -56,9 +56,9 @@
             <div class="dropdown">
                 <button class="btn btn-light dropdown-toggle d-flex align-items-center border-0 bg-transparent" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="avatar bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 32px; height: 32px;">
-                        {{ current_user.username[:2]|upper if current_user.is_authenticated else 'U' }}
+                        {{ current_user.Username[:2]|upper if current_user.is_authenticated else 'U' }}
                     </div>
-                    <span class="fw-semibold">{{ current_user.username if current_user.is_authenticated else _('Guest') }}</span>
+                    <span class="fw-semibold">{{ current_user.Username if current_user.is_authenticated else _('Guest') }}</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
                     <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="bi bi-person me-2"></i>{{ _('Profile') }}</a></li>
