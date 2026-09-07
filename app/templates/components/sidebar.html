@@ -12,12 +12,12 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {% if active_page == 'employees' %}active bg-primary rounded{% endif %}" href="#">
-                    <i class="bi bi-people me-2"></i> <span>{{ _('Dipendenti/Employees') }}</span>
+                    <i class="bi bi-people me-2"></i> <span>{{ _('Dipendenti') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white {% if active_page == 'contracts' %}active bg-primary rounded{% endif %}" href="#">
-                    <i class="bi bi-file-earmark-text me-2"></i> <span>{{ _('Contratti/Contracts') }}</span>
+                    <i class="bi bi-file-earmark-text me-2"></i> <span>{{ _('Contratti') }}</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -26,15 +26,28 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link text-white {% if active_page == 'needs' %}active bg-primary rounded{% endif %}" href="#">
-                    <i class="bi bi-graph-up-arrow me-2"></i> <span>{{ _('Fabbisogno/Needs') }}</span>
+                <a class="nav-link text-white {% if active_page == 'needs' %}active bg-primary rounded{% endif %}" href="{{ url_for('needs.index') }}">
+                    <i class="bi bi-graph-up-arrow me-2"></i> <span>{{ _('Fabbisogno') }}</span>
                 </a>
             </li>
-            {% if current_user.is_authenticated and getattr(current_user, 'role', '') == 'admin' %}
+
+            {% if current_user.is_authenticated and (current_user.IsSuperAdmin or current_user.has_role('admin')) %}
             <li class="nav-item mt-4">
-                <h6 class="sidebar-heading px-3 text-secondary text-uppercase" style="font-size: 0.8rem;">{{ _('Administration') }}</h6>
-                <a class="nav-link text-white {% if active_page == 'admin' %}active bg-primary rounded{% endif %}" href="#">
-                    <i class="bi bi-gear me-2"></i> <span>{{ _('Amministrazione') }}</span>
+                <h6 class="sidebar-heading px-3 text-secondary text-uppercase" style="font-size: 0.8rem;">{{ _('Amministrazione') }}</h6>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if active_page == 'admin' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.index') }}">
+                    <i class="bi bi-gear me-2"></i> <span>{{ _('Impostazioni') }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if active_page == 'admin_users' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.users') }}">
+                    <i class="bi bi-person-gear me-2"></i> <span>{{ _('Utenti') }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if active_page == 'admin_import' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.import_page') }}">
+                    <i class="bi bi-cloud-arrow-down me-2"></i> <span>{{ _('Importazione') }}</span>
                 </a>
             </li>
             {% endif %}
