@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% set active_page = 'profile' %}
+
+{% block title %}{{ _('Profilo Utente') }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item active">{{ _('Profilo') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>{{ _('Profilo Utente') }}</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <th class="text-muted" style="width: 40%;">{{ _('Username') }}</th>
+                        <td>{{ user.Username }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Email') }}</th>
+                        <td>{{ user.Email or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Ruoli') }}</th>
+                        <td>
+                            {% for role in user.roles %}
+                            <span class="badge bg-info me-1">{{ role.RoleName }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Lingua preferita') }}</th>
+                        <td>{{ user.PreferredLanguage or 'it' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Ultimo accesso') }}</th>
+                        <td>{{ user.LastLoginAt.strftime('%d/%m/%Y %H:%M') if user.LastLoginAt else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Account creato') }}</th>
+                        <td>{{ user.CreatedAt.strftime('%d/%m/%Y') if user.CreatedAt else '-' }}</td>
+                    </tr>
+                    {% if user.IsSuperAdmin %}
+                    <tr>
+                        <th class="text-muted">{{ _('Tipo') }}</th>
+                        <td><span class="badge bg-danger">SuperAdmin</span></td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            <div class="card-footer text-end">
+                <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-key me-1"></i>{{ _('Cambia Password') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

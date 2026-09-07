@@ -40,7 +40,7 @@ def login():
         if user:
             if user.is_locked_out:
                 flash(_('Account bloccato. Riprova più tardi.'), 'error')
-                return render_template('login.html', form=form)
+                return render_template('auth/login.html', form=form)
                 
             if user.check_password(form.password.data):
                 user.record_successful_login()
@@ -60,7 +60,7 @@ def login():
                 
         flash(_('Username o password non validi'), 'error')
         
-    return render_template('login.html', form=form)
+    return render_template('auth/login.html', form=form)
 
 @auth_bp.route('/logout')
 @login_required
@@ -106,7 +106,7 @@ def forgot_password():
         flash(_("Se l'account esiste, è stata inviata un'email con il link per reimpostare la password."), 'info')
         return redirect(url_for('auth.login'))
         
-    return render_template('forgot_password.html', form=form)
+    return render_template('auth/forgot_password.html', form=form)
 
 @auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
@@ -126,7 +126,7 @@ def reset_password(token):
         if errors:
             for err in errors:
                 flash(err, 'error')
-            return render_template('reset_password.html', form=form)
+            return render_template('auth/reset_password.html', form=form)
             
         user.set_password(form.password.data)
         user.MustChangePassword = False
@@ -138,7 +138,7 @@ def reset_password(token):
         flash(_('La tua password è stata reimpostata. Ora puoi accedere.'), 'success')
         return redirect(url_for('auth.login'))
         
-    return render_template('reset_password.html', form=form)
+    return render_template('auth/reset_password.html', form=form)
 
 @auth_bp.route('/forgot-username', methods=['GET', 'POST'])
 def forgot_username():
@@ -164,7 +164,7 @@ def forgot_username():
         flash(_("Se l'email esiste nei nostri sistemi, ti abbiamo inviato il tuo username."), 'info')
         return redirect(url_for('auth.login'))
         
-    return render_template('forgot_username.html', form=form)
+    return render_template('auth/forgot_username.html', form=form)
 
 @auth_bp.route('/change-password', methods=['GET', 'POST'])
 @login_required
@@ -173,13 +173,13 @@ def change_password():
     if form.validate_on_submit():
         if not current_user.check_password(form.current_password.data):
             flash(_('La password corrente non è corretta.'), 'error')
-            return render_template('change_password.html', form=form)
+            return render_template('auth/change_password.html', form=form)
             
         errors = validate_password_strength(form.new_password.data)
         if errors:
             for err in errors:
                 flash(err, 'error')
-            return render_template('change_password.html', form=form)
+            return render_template('auth/change_password.html', form=form)
             
         current_user.set_password(form.new_password.data)
         was_forced = current_user.MustChangePassword
@@ -193,9 +193,9 @@ def change_password():
             return redirect(url_for('dashboard.index'))
         return redirect(url_for('auth.profile'))
         
-    return render_template('change_password.html', form=form)
+    return render_template('auth/change_password.html', form=form)
 
 @auth_bp.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', user=current_user)
+    return render_template('auth/profile.html', user=current_user)
