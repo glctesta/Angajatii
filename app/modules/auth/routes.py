@@ -1,14 +1,32 @@
-import secrets
-from datetime import datetime, timedelta, timezone
+import sys, os
+from datetime import datetime, timezone
 from flask import render_template, redirect, url_for, flash, request, current_app, session
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_babel import _
 from . import auth_bp
 from .forms import LoginForm, ForgotPasswordForm, ResetPasswordForm, ForgotUsernameForm, ChangePasswordForm
-# This assumes you have extensions and models available
-# from app.extensions import db, bcrypt
-# from app.models.auth import User, PasswordResetToken
-# from email_connector import EmailSender
+from app.extensions import db
+from app.models.auth import User, PasswordResetToken
+from app.services.audit_service import log_action
+from sqlalchemy import or_
+
+# Add root to sys.path to import email_connector
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+from email_connector import EmailSender
+
+def validate_password_strength(password):
+    errors = []
+    if len(password) < 8:
+        errors.append(_('Minimo 8 caratteri'))
+    if not any(c.isupper() for c in password):
+        errors.append(_('Almeno una lettera maiuscola'))
+    if not any(c.islower() for c in password):
+        errors.append(_('Almeno una lettera minuscola'))
+    if not any(c.isdigit() for c in password):
+        errors.append(_('Almeno un numero'))
+    if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in password):
+        errors.append(_('Almeno un carattere speciale'))
+    return errors
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -17,25 +35,39 @@ def login():
         
     form = LoginForm()
     if form.validate_on_submit():
-        # Placeholder for actual authentication logic
-        # user = User.query.filter_by(username=form.username.data).first()
-        # if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
-        #     login_user(user, remember=form.remember_me.data)
-        #     if getattr(user, 'MustChangePassword', False):
-        #         return redirect(url_for('auth.change_password'))
-        #     next_page = request.args.get('next')
-        #     return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
-        # else:
-        #     flash(_('Invalid username or password'), 'error')
-        flash(_('Login logic not yet fully implemented'), 'info')
+        user = db.session.query(User).filter_by(Username=form.username.data).first()
+        
+        if user:
+            if user.is_locked_out:
+                flash(_('Account bloccato. Riprova più tardi.'), 'error')
+                return render_template('login.html', form=form)
+                
+            if user.check_password(form.password.data):
+                user.record_successful_login()
+                db.session.commit()
+                login_user(user, remember=form.remember_me.data)
+                
+                log_action(user.UserId, 'LOGIN', 'auth')
+                
+                if user.MustChangePassword:
+                    return redirect(url_for('auth.change_password'))
+                    
+                next_page = request.args.get('next')
+                return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
+            else:
+                user.record_failed_login()
+                db.session.commit()
+                
+        flash(_('Username o password non validi'), 'error')
         
     return render_template('login.html', form=form)
 
 @auth_bp.route('/logout')
 @login_required
 def logout():
+    log_action(current_user.UserId, 'LOGOUT', 'auth')
     logout_user()
-    flash(_('You have been logged out.'), 'info')
+    flash(_('Sei stato disconnesso.'), 'info')
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/change-language', methods=['POST'])
@@ -52,9 +84,26 @@ def forgot_password():
         
     form = ForgotPasswordForm()
     if form.validate_on_submit():
-        # logic to check user and generate token
-        # flash(_('If the account exists, a reset link has been sent to the registered email.'), 'info')
-        flash(_('Forgot password logic placeholder executed.'), 'info')
+        user = db.session.query(User).filter(
+            or_(User.Username == form.username_or_email.data, User.Email == form.username_or_email.data)
+        ).first()
+        
+        if user and user.Email:
+            token = PasswordResetToken.generate_token(user.UserId, db.session)
+            
+            try:
+                sender = EmailSender('email_key.key', 'email_credentials.enc')
+                reset_url = url_for('auth.reset_password', token=token, _external=True)
+                sender.send_email(
+                    to=user.Email,
+                    subject=_('Ripristino Password'),
+                    body=f"Usa questo link per reimpostare la tua password: {reset_url}"
+                )
+                log_action(user.UserId, 'PASSWORD_RESET_REQUEST', 'auth')
+            except Exception as e:
+                current_app.logger.error(f"Failed to send reset email: {e}")
+                
+        flash(_("Se l'account esiste, è stata inviata un'email con il link per reimpostare la password."), 'info')
         return redirect(url_for('auth.login'))
         
     return render_template('forgot_password.html', form=form)
@@ -64,10 +113,29 @@ def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
         
+    reset_token = db.session.query(PasswordResetToken).filter_by(Token=token).first()
+    
+    if not reset_token or not reset_token.is_valid:
+        flash(_('Il link per il ripristino della password non è valido o è scaduto.'), 'error')
+        return redirect(url_for('auth.forgot_password'))
+        
     form = ResetPasswordForm()
     if form.validate_on_submit():
-        # logic to validate token and change password
-        flash(_('Your password has been reset. You can now log in.'), 'success')
+        user = reset_token.user
+        errors = validate_password_strength(form.password.data)
+        if errors:
+            for err in errors:
+                flash(err, 'error')
+            return render_template('reset_password.html', form=form)
+            
+        user.set_password(form.password.data)
+        user.MustChangePassword = False
+        reset_token.mark_used()
+        db.session.commit()
+        
+        log_action(user.UserId, 'PASSWORD_RESET', 'auth')
+        
+        flash(_('La tua password è stata reimpostata. Ora puoi accedere.'), 'success')
         return redirect(url_for('auth.login'))
         
     return render_template('reset_password.html', form=form)
@@ -79,8 +147,21 @@ def forgot_username():
         
     form = ForgotUsernameForm()
     if form.validate_on_submit():
-        # logic to find user by email and send username
-        flash(_('If the email exists in our system, the username has been sent to it.'), 'info')
+        user = db.session.query(User).filter_by(Email=form.email.data).first()
+        
+        if user and user.Email:
+            try:
+                sender = EmailSender('email_key.key', 'email_credentials.enc')
+                sender.send_email(
+                    to=user.Email,
+                    subject=_('Recupero Username'),
+                    body=f"Il tuo username è: {user.Username}"
+                )
+                log_action(user.UserId, 'USERNAME_RECOVERY', 'auth')
+            except Exception as e:
+                current_app.logger.error(f"Failed to send username recovery email: {e}")
+                
+        flash(_("Se l'email esiste nei nostri sistemi, ti abbiamo inviato il tuo username."), 'info')
         return redirect(url_for('auth.login'))
         
     return render_template('forgot_username.html', form=form)
@@ -90,15 +171,31 @@ def forgot_username():
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
-        # logic to verify current password and set new password
-        # current_user.MustChangePassword = False
-        # db.session.commit()
-        flash(_('Your password has been updated.'), 'success')
-        return redirect(url_for('dashboard.index'))
+        if not current_user.check_password(form.current_password.data):
+            flash(_('La password corrente non è corretta.'), 'error')
+            return render_template('change_password.html', form=form)
+            
+        errors = validate_password_strength(form.new_password.data)
+        if errors:
+            for err in errors:
+                flash(err, 'error')
+            return render_template('change_password.html', form=form)
+            
+        current_user.set_password(form.new_password.data)
+        was_forced = current_user.MustChangePassword
+        current_user.MustChangePassword = False
+        db.session.commit()
+        
+        log_action(current_user.UserId, 'PASSWORD_CHANGE', 'auth')
+        
+        flash(_('La tua password è stata aggiornata con successo.'), 'success')
+        if was_forced:
+            return redirect(url_for('dashboard.index'))
+        return redirect(url_for('auth.profile'))
         
     return render_template('change_password.html', form=form)
 
 @auth_bp.route('/profile')
 @login_required
 def profile():
-    return render_template('base.html') # Placeholder
+    return render_template('profile.html', user=current_user)

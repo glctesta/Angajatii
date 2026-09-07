@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Needs Detailed List') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">{{ _('Home') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('needs.index') }}">{{ _('Needs Dashboard') }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ _('Details') }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ _('Detailed Needs List') }}</h2>
+        <a href="{{ url_for('needs.create') }}" class="btn btn-primary">{{ _('Create New Need') }}</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    {{ form.department.label(class="form-label") }}
+                    {{ form.department(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.function.label(class="form-label") }}
+                    {{ form.function(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.shift.label(class="form-label") }}
+                    {{ form.shift(class="form-select") }}
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">{{ _('Filter') }}</button>
+                    <a href="{{ url_for('needs.detail') }}" class="btn btn-outline-secondary ms-2">{{ _('Clear') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>{{ _('Sub Department') }}</th>
+                    <th>{{ _('Function') }}</th>
+                    <th>{{ _('Shift') }}</th>
+                    <th>{{ _('Required') }}</th>
+                    <th>{{ _('Min') }}</th>
+                    <th>{{ _('Current') }}</th>
+                    <th>{{ _('Gap') }}</th>
+                    <th>{{ _('Status') }}</th>
+                    <th>{{ _('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in needs_data %}
+                <tr>
+                    <td>{{ item.sub_cdc.SubCdcDescription }}</td>
+                    <td>{{ item.function.FunctionDescription }}</td>
+                    <td>{{ item.need.ShiftId or _('Any') }}</td>
+                    <td>{{ item.required_count }}</td>
+                    <td>{{ item.min_count or '-' }}</td>
+                    <td>{{ item.current_count }}</td>
+                    <td>
+                        {% if item.gap > 0 %}
+                        <span class="text-danger fw-bold">{{ item.gap }}</span>
+                        {% else %}
+                        <span class="text-success">{{ item.gap }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.current_count < (item.min_count or 0) %}
+                        <span class="badge bg-danger">{{ _('Critical') }}</span>
+                        {% elif item.gap > 0 %}
+                        <span class="badge bg-warning text-dark">{{ _('Warning') }}</span>
+                        {% else %}
+                        <span class="badge bg-success">{{ _('OK') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('needs.edit', id=item.need.NeedId) }}" class="btn btn-sm btn-outline-primary">{{ _('Edit') }}</a>
+                        <form action="{{ url_for('needs.close', id=item.need.NeedId) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{ _('Are you sure you want to close this need?') }}')">{{ _('Close') }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center">{{ _('No needs found.') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

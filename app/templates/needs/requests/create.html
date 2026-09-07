@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('New Resource Request') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">{{ _('Home') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('needs.index') }}">{{ _('Needs') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('needs.requests') }}">{{ _('Requests') }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ _('New Request') }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ _('New Resource Request') }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.sub_cdc.label(class="form-label") }}
+                            {{ form.sub_cdc(class="form-select") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.function.label(class="form-label") }}
+                            {{ form.function(class="form-select") }}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.requested_count.label(class="form-label") }}
+                                {{ form.requested_count(class="form-control", type="number", min="1") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.priority.label(class="form-label") }}
+                                {{ form.priority(class="form-select") }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.reason.label(class="form-label") }}
+                            {{ form.reason(class="form-control", rows="3") }}
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('needs.requests') }}" class="btn btn-outline-secondary me-md-2">{{ _('Cancel') }}</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

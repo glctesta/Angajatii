@@ -90,9 +90,9 @@ def create_database(db_name: str = 'Employees') -> None:
         cursor = conn.cursor()
         cursor.execute(f"CREATE DATABASE [{db_name}]")
         conn.close()
-        print(f"[Installer] ✅ Database '{db_name}' creato con successo.")
+        print(f"[Installer] OK - Database '{db_name}' creato con successo.")
     except Exception as e:
-        print(f"[Installer] ❌ Errore nella creazione del database: {e}")
+        print(f"[Installer] ERROR - Errore nella creazione del database: {e}")
         raise
 
 
@@ -108,7 +108,7 @@ def create_schemas() -> None:
                 END
             """))
             conn.commit()
-            print(f"[Installer] ✅ Schema '{schema}' verificato/creato.")
+            print(f"[Installer] OK - Schema '{schema}' verificato/creato.")
 
 
 def create_tables() -> None:
@@ -117,7 +117,7 @@ def create_tables() -> None:
     import app.models  # noqa: F401
 
     db.create_all()
-    print("[Installer] ✅ Tutte le tabelle create con successo.")
+    print("[Installer] OK - Tutte le tabelle create con successo.")
 
 
 def init_db(seed: bool = True) -> None:
@@ -144,6 +144,6 @@ def init_db(seed: bool = True) -> None:
         from installer.seed_data import seed_database
         print("[Installer] Inserimento dati iniziali...")
         seed_database()
-        print("[Installer] ✅ Dati iniziali inseriti.")
+        print("[Installer] OK - Dati iniziali inseriti.")
 
     print("[Installer] === Installazione completata ===")

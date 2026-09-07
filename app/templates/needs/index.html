@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block active_page %}'needs'{% endblock %}
+
+{% block title %}{{ _('Needs Dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">{{ _('Home') }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ _('Needs Dashboard') }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ _('Fabbisogno Risorse') }}</h2>
+        <div>
+            <a href="{{ url_for('needs.detail') }}" class="btn btn-outline-primary">{{ _('Details List') }}</a>
+            <a href="{{ url_for('needs.gap_analysis') }}" class="btn btn-outline-warning">{{ _('Gap Analysis') }}</a>
+            <a href="{{ url_for('needs.requests') }}" class="btn btn-outline-info">{{ _('Resource Requests') }}</a>
+            <form action="{{ url_for('needs.snapshot') }}" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-secondary">{{ _('Daily Snapshot') }}</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overall KPI -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Total Departments') }}</h5>
+                    <p class="card-text fs-2">{{ total_departments }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Total Required') }}</h5>
+                    <p class="card-text fs-2">{{ total_required }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Total Current') }}</h5>
+                    <p class="card-text fs-2">{{ total_current }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white {% if total_gap > 0 %}bg-danger{% else %}bg-success{% endif %} mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Total Gap') }}</h5>
+                    <p class="card-text fs-2">{{ total_gap }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        {% for dept in summary %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-{% if dept.status == 'critical' %}danger{% elif dept.status == 'warning' %}warning{% else %}success{% endif %}">
+                <div class="card-header bg-{% if dept.status == 'critical' %}danger{% elif dept.status == 'warning' %}warning{% else %}success{% endif %} text-white">
+                    {{ dept.department_name }}
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('Required') }}
+                            <span class="badge bg-secondary rounded-pill">{{ dept.total_required }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('Current') }}
+                            <span class="badge bg-primary rounded-pill">{{ dept.total_current }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ _('Gap') }}
+                            <span class="badge {% if dept.total_gap > 0 %}bg-danger{% else %}bg-success{% endif %} rounded-pill">{{ dept.total_gap }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

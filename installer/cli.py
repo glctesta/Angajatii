@@ -29,14 +29,14 @@ def install_command(check):
 @with_appcontext
 def create_admin_command():
     """Create or reset the admin user."""
-    admin_user = User.query.filter_by(Username='admin').first()
+    admin_user = db.session.query(User).filter_by(Username='admin').first()
     if not admin_user:
-        admin_user = User(Username='admin', MustChangePassword=True)
+        admin_user = User(Username='admin', PasswordHash='', MustChangePassword=True)
         db.session.add(admin_user)
         
     admin_user.set_password('Admin@2026!')
     
-    admin_role = Role.query.filter_by(RoleName='admin').first()
+    admin_role = db.session.query(Role).filter_by(RoleName='admin').first()
     if admin_role and admin_role not in admin_user.roles:
         admin_user.roles.append(admin_role)
         
