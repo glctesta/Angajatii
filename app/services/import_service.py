@@ -60,7 +60,6 @@ class ImportService:
         return self.stats
     
     def _get_source_connection(self, database_name):
-        """Get pyodbc connection to source database using encrypted credentials."""
         root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         if root_dir not in sys.path:
             sys.path.insert(0, root_dir)
@@ -72,21 +71,22 @@ class ImportService:
         )
         config = manager.load_config()
         
-        drivers = ['ODBC Driver 18 for SQL Server', 'ODBC Driver 17 for SQL Server', 'SQL Server']
         driver = None
-        for d in drivers:
+        for d in ['ODBC Driver 18 for SQL Server', 'ODBC Driver 17 for SQL Server']:
             if d in pyodbc.drivers():
                 driver = d
                 break
         
-        conn_str = (
-            f"DRIVER={{{driver}}};"
-            f"SERVER={config['server']};"
-            f"DATABASE={database_name};"
-            f"UID={config['username']};"
-            f"PWD={config['password']};"
-            "TrustServerCertificate=yes;Encrypt=yes;"
-        )
+        server = config['server']
+        user = config['username']
+        pwd = config['password']
+        
+        if driver:
+            conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={database_name};UID={user};PWD={pwd};TrustServerCertificate=yes;Encrypt=yes;"
+        else:
+            driver = 'SQL Server'
+            conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={database_name};UID={user};PWD={pwd};"
+        
         return pyodbc.connect(conn_str)
     
     def _import_continents(self, cursor):
@@ -101,106 +101,160 @@ class ImportService:
         return count
     
     def _import_nations(self, cursor):
-        cursor.execute('SELECT NationId, NationName, ContinentId, UE, IsoCode FROM Geo.Nations')
+        cursor.execute('SELECT NationId, ContinentId, NationName FROM Geo.Nations')
         count = 0
         for row in cursor.fetchall():
             existing = db.session.query(Nation).filter_by(NationId=row.NationId).first()
             if not existing:
-                db.session.add(Nation(NationId=row.NationId, NationName=row.NationName, ContinentId=row.ContinentId, UE=row.UE, IsoCode=row.IsoCode))
+                db.session.add(Nation(
+                    NationId=row.NationId,
+                    ContinentId=row.ContinentId,
+                    NationName=row.NationName
+                ))
                 count += 1
         db.session.commit()
         return count
 
     def _import_counties(self, cursor):
-        cursor.execute('SELECT CountyId, CountyName, NationId, ProvinceCode, StartDate, EndDate FROM Geo.Counties')
+        cursor.execute('SELECT CountyId, CountyName, NationId, LicencePlate FROM Geo.Counties')
         count = 0
         for row in cursor.fetchall():
             existing = db.session.query(County).filter_by(CountyId=row.CountyId).first()
             if not existing:
-                db.session.add(County(CountyId=row.CountyId, CountyName=row.CountyName, NationId=row.NationId, ProvinceCode=row.ProvinceCode, StartDate=row.StartDate, EndDate=row.EndDate))
+                db.session.add(County(
+                    CountyId=row.CountyId,
+                    CountyName=row.CountyName,
+                    NationId=row.NationId,
+                    CountyCode=row.LicencePlate
+                ))
                 count += 1
         db.session.commit()
         return count
         
     def _import_towns(self, cursor):
-        cursor.execute('SELECT TownId, TownName, CountyId, StartDate, EndDate, IsEstonia, CadastralCode FROM Geo.Towns')
+        cursor.execute('SELECT TownId, TownName, CountyId FROM Geo.Towns')
         count = 0
         for row in cursor.fetchall():
             existing = db.session.query(Town).filter_by(TownId=row.TownId).first()
             if not existing:
-                db.session.add(Town(TownId=row.TownId, TownName=row.TownName, CountyId=row.CountyId, StartDate=row.StartDate, EndDate=row.EndDate, IsEstonia=row.IsEstonia, CadastralCode=row.CadastralCode))
+                db.session.add(Town(
+                    TownId=row.TownId,
+                    TownName=row.TownName,
+                    CountyId=row.CountyId
+                ))
                 count += 1
         db.session.commit()
         return count
 
     def _import_cost_centers(self, cursor):
-        cursor.execute('SELECT CostCenterId, CostCenterName, CostCenterCode FROM dbo.CostCenters')
+        cursor.execute('SELECT CdcId, CdcDescription, Cdc, CdCNoCiel FROM dbo.CostCenters')
         count = 0
         for row in cursor.fetchall():
-            existing = db.session.query(CostCenter).filter_by(CostCenterId=row.CostCenterId).first()
+            existing = db.session.query(CostCenter).filter_by(CdcId=row.CdcId).first()
             if not existing:
-                db.session.add(CostCenter(CostCenterId=row.CostCenterId, CostCenterName=row.CostCenterName, CostCenterCode=row.CostCenterCode))
+                db.session.add(CostCenter(
+                    CdcId=row.CdcId,
+                    CdcDescription=row.CdcDescription,
+                    Cdc=row.Cdc,
+                    CdCNoCiel=row.CdCNoCiel
+                ))
                 count += 1
         db.session.commit()
         return count
 
     def _import_cdc_sub(self, cursor):
-        cursor.execute('SELECT CdcSubId, CostCenterId, CdcSubName FROM dbo.CdcSub')
+        cursor.execute('SELECT SubCdcId, CdcId, SubCdc, SubCdcDescription, DirectEmployee, IndirectProduction, SubCdcNoCiel, DefaultCdc, PhaseTraceId FROM dbo.CdcSub')
         count = 0
         for row in cursor.fetchall():
-            existing = db.session.query(CdcSub).filter_by(CdcSubId=row.CdcSubId).first()
+            existing = db.session.query(CdcSub).filter_by(SubCdcId=row.SubCdcId).first()
             if not existing:
-                db.session.add(CdcSub(CdcSubId=row.CdcSubId, CostCenterId=row.CostCenterId, CdcSubName=row.CdcSubName))
+                db.session.add(CdcSub(
+                    SubCdcId=row.SubCdcId,
+                    CdcId=row.CdcId,
+                    SubCdc=row.SubCdc,
+                    SubCdcDescription=row.SubCdcDescription,
+                    DirectEmployee=row.DirectEmployee,
+                    IndirectProduction=row.IndirectProduction,
+                    SubCdcNoCiel=row.SubCdcNoCiel,
+                    DefaultCdc=row.DefaultCdc,
+                    PhaseTraceId=row.PhaseTraceId
+                ))
                 count += 1
         db.session.commit()
         return count
 
     def _import_functions_structure(self, cursor):
-        cursor.execute('SELECT StructureId, StructureName FROM dbo.FunctionsStructure')
+        cursor.execute('SELECT StructureId, StructureDescription FROM dbo.FunctionsStructure')
         count = 0
         for row in cursor.fetchall():
             existing = db.session.query(FunctionsStructure).filter_by(StructureId=row.StructureId).first()
             if not existing:
-                db.session.add(FunctionsStructure(StructureId=row.StructureId, StructureName=row.StructureName))
+                db.session.add(FunctionsStructure(
+                    StructureId=row.StructureId,
+                    StructureDescription=row.StructureDescription
+                ))
                 count += 1
         db.session.commit()
         return count
 
     def _import_functions(self, cursor):
-        cursor.execute('SELECT FunctionId, StructureId, FunctionName FROM dbo.Functions')
+        cursor.execute('SELECT FunctionId, FunctionCode, FunctionDescription, DirectEmployee, IsStructure, NoDayAnnouncementToQuit, StructureId, TimeClockingProfessionID FROM dbo.Functions')
         count = 0
         for row in cursor.fetchall():
             existing = db.session.query(Function).filter_by(FunctionId=row.FunctionId).first()
             if not existing:
-                db.session.add(Function(FunctionId=row.FunctionId, StructureId=row.StructureId, FunctionName=row.FunctionName))
+                db.session.add(Function(
+                    FunctionId=row.FunctionId,
+                    FunctionCode=row.FunctionCode,
+                    FunctionDescription=row.FunctionDescription,
+                    DirectEmployee=row.DirectEmployee,
+                    IsStructure=row.IsStructure,
+                    NoDayAnnouncementToQuit=row.NoDayAnnouncementToQuit,
+                    StructureId=row.StructureId,
+                    TimeClockingProfessionID=row.TimeClockingProfessionID
+                ))
                 count += 1
         db.session.commit()
         return count
 
     def _import_contract_types(self, cursor):
-        cursor.execute('SELECT ContractTypeId, ContractTypeName FROM dbo.ContractTypes')
+        cursor.execute('SELECT ContractTypeId, ContractType, NoHours, Partial, ContractTypeRom, TestPeriod, Acronimo FROM dbo.ContractTypes')
         count = 0
         for row in cursor.fetchall():
             existing = db.session.query(ContractType).filter_by(ContractTypeId=row.ContractTypeId).first()
             if not existing:
-                db.session.add(ContractType(ContractTypeId=row.ContractTypeId, ContractTypeName=row.ContractTypeName))
+                db.session.add(ContractType(
+                    ContractTypeId=row.ContractTypeId,
+                    ContractType=row.ContractType,
+                    NoHours=row.NoHours,
+                    Partial=row.Partial,
+                    ContractTypeRom=row.ContractTypeRom,
+                    TestPeriod=row.TestPeriod,
+                    Acronimo=row.Acronimo
+                ))
                 count += 1
         db.session.commit()
         return count
 
     def _import_employeers(self, cursor):
-        cursor.execute('SELECT EmployeerId, EmployeerName, EmployeerCode FROM dbo.Employeers')
+        cursor.execute('SELECT EmployeerId, EmployeerFiscalCode, ChamberOfCommercNo, EmployeerName, PointOfWorkOfId, DateOut FROM dbo.Employeers')
         count = 0
         for row in cursor.fetchall():
             existing = db.session.query(Employeer).filter_by(EmployeerId=row.EmployeerId).first()
             if not existing:
-                db.session.add(Employeer(EmployeerId=row.EmployeerId, EmployeerName=row.EmployeerName, EmployeerCode=row.EmployeerCode))
+                db.session.add(Employeer(
+                    EmployeerId=row.EmployeerId,
+                    EmployeerName=row.EmployeerName,
+                    EmployeerFiscalCode=row.EmployeerFiscalCode,
+                    EmployeerRegCode=row.ChamberOfCommercNo,
+                    PointOfWorkOfId=row.PointOfWorkOfId,
+                    DateOut=row.DateOut
+                ))
                 count += 1
         db.session.commit()
         return count
 
     def _import_code_cores(self, cursor):
-        # We need to query CodeCore from source if it exists. Some schemas may not have it or have it differently named. Let's assume CodeCores
         try:
             cursor.execute('SELECT CodeId, CodeName FROM dbo.CodeCores')
         except pyodbc.ProgrammingError:
@@ -318,9 +372,13 @@ class ImportService:
 
     def _import_hire_history(self, cursor):
         cursor.execute('''
-            SELECT EmployeeHireHistoryId, EmployeeId, EmployeerId, ContractTypeId, HireDate, 
-                   StartWorkDate, EndWorkDate, DateSys, HourPerDay, HolidayPerYear, 
-                   CoreHiringCode, HiringSalary, NoWorkContract 
+            SELECT EmployeeHireHistoryId, EmployeeId, EmployeerId, IdRegistroOffer, IdRegistroCm, ContractTypeId, 
+                   HireDate, StartWorkDate, EndWorkDate, DateSys, HourPerDay, HolidayPerYear, 
+                   CoreHiringCode, HiringSalary, NoWorkContract, DateOut, ChiusoPerModifica, ModificatoDa, 
+                   AccessID, TestPeriod, NoNotaLichidare, DataNotaLichidare, RichiestaLicenziamento, 
+                   DataRichiestaLicenziamento, ArtLegaleLicenziamento, IdRichiestaLicenziamento, 
+                   ConsensoInformato, CodeCoresId, SedeLavoroId, ArticoloLegaleId, NotaDeLichidareId, 
+                   NrDeciziaIncetareId, RepartitionDecizionId, RecordedIntoRevisal, JustForReport, EndWorkDateContract
             FROM dbo.EmployeeHireHistory
         ''')
         count = 0
@@ -331,6 +389,8 @@ class ImportService:
                     EmployeeHireHistoryId=row.EmployeeHireHistoryId,
                     EmployeeId=row.EmployeeId,
                     EmployeerId=row.EmployeerId,
+                    IdRegistroOffer=row.IdRegistroOffer,
+                    IdRegistroCm=row.IdRegistroCm,
                     ContractTypeId=row.ContractTypeId,
                     HireDate=row.HireDate,
                     StartWorkDate=row.StartWorkDate,
@@ -340,7 +400,28 @@ class ImportService:
                     HolidayPerYear=row.HolidayPerYear,
                     CoreHiringCode=row.CoreHiringCode,
                     HiringSalary=row.HiringSalary,
-                    NoWorkContract=row.NoWorkContract
+                    NoWorkContract=row.NoWorkContract,
+                    DateOut=row.DateOut,
+                    ChiusoPerModifica=row.ChiusoPerModifica,
+                    ModificatoDa=row.ModificatoDa,
+                    AccessID=row.AccessID,
+                    TestPeriod=row.TestPeriod,
+                    NoNotaLichidare=row.NoNotaLichidare,
+                    DataNotaLichidare=row.DataNotaLichidare,
+                    RichiestaLicenziamento=row.RichiestaLicenziamento,
+                    DataRichiestaLicenziamento=row.DataRichiestaLicenziamento,
+                    ArtLegaleLicenziamento=row.ArtLegaleLicenziamento,
+                    IdRichiestaLicenziamento=row.IdRichiestaLicenziamento,
+                    ConsensoInformato=row.ConsensoInformato,
+                    CodeCoresId=row.CodeCoresId,
+                    SedeLavoroId=row.SedeLavoroId,
+                    ArticoloLegaleId=row.ArticoloLegaleId,
+                    NotaDeLichidareId=row.NotaDeLichidareId,
+                    NrDeciziaIncetareId=row.NrDeciziaIncetareId,
+                    RepartitionDecizionId=row.RepartitionDecizionId,
+                    RecordedIntoRevisal=row.RecordedIntoRevisal,
+                    JustForReport=row.JustForReport,
+                    EndWorkDateContract=row.EndWorkDateContract
                 ))
                 count += 1
         db.session.commit()
@@ -348,21 +429,20 @@ class ImportService:
 
     def _import_cdc_stories(self, cursor):
         cursor.execute('''
-            SELECT StoryId, EmployeeId, CdcSubId, StartDate, EndDate, FunctionId, ShiftId 
+            SELECT EmployeeCdcStoryId, EmployeeHireHistoryId, SubCdcId, FunctionId, DateIn, DateOut
             FROM dbo.EmployeeCdcStories
         ''')
         count = 0
         for row in cursor.fetchall():
-            existing = db.session.query(EmployeeCdcStory).filter_by(StoryId=row.StoryId).first()
+            existing = db.session.query(EmployeeCdcStory).filter_by(EmployeeCdcStoryId=row.EmployeeCdcStoryId).first()
             if not existing:
                 db.session.add(EmployeeCdcStory(
-                    StoryId=row.StoryId,
-                    EmployeeId=row.EmployeeId,
-                    CdcSubId=row.CdcSubId,
-                    StartDate=row.StartDate,
-                    EndDate=row.EndDate,
+                    EmployeeCdcStoryId=row.EmployeeCdcStoryId,
+                    EmployeeHireHistoryId=row.EmployeeHireHistoryId,
+                    SubCdcId=row.SubCdcId,
                     FunctionId=row.FunctionId,
-                    ShiftId=row.ShiftId
+                    DateIn=row.DateIn,
+                    DateOut=row.DateOut
                 ))
                 count += 1
         db.session.commit()
