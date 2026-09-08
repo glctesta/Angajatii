@@ -141,6 +141,17 @@ def validate_cnp(cnp: str) -> dict:
     result['county_code'] = jj
     result['county_name'] = COUNTY_NAMES.get(jj, f'Codice {jj}')
 
+    # Residency type based on S digit
+    if s in (1, 2, 3, 4, 5, 6):
+        result['is_foreign'] = False
+        result['residency_type'] = 'citizen'
+    elif s in (7, 8):
+        result['is_foreign'] = True
+        result['residency_type'] = 'foreign_resident'
+    elif s == 9:
+        result['is_foreign'] = True
+        result['residency_type'] = 'stateless'
+
     return result
 
 

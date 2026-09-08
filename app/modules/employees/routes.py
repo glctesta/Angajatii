@@ -269,6 +269,7 @@ def hiring_new():
                 'middle_name': request.form.get('middle_name', '').strip(),
                 'sex': request.form.get('sex', 'M'),
                 'birth_town_id': int(request.form.get('birth_town_id') or 0) or None,
+                'nationality_id': int(request.form.get('nationality_id') or 1),
                 # Document
                 'doc_type_id': int(request.form.get('doc_type_id') or 0) or None,
                 'doc_serie': request.form.get('doc_serie', '').strip(),
@@ -400,6 +401,7 @@ def hiring_new():
                     flash(err, 'danger')
 
     # GET: Load all dropdown data
+    from app.models import Nation
     companies = db.session.query(Employeer).filter(
         Employeer.DateOut.is_(None)
     ).order_by(Employeer.EmployeerName).all()
@@ -412,6 +414,7 @@ def hiring_new():
     code_cores = db.session.query(CodeCore).filter(CodeCore.DateOut.is_(None)).order_by(CodeCore.CoreCode).all()
     medical_centers = db.session.query(MedicalCenter).filter_by(IsActive=True).all()
     counties = db.session.query(County).order_by(County.CountyName).all()
+    nations = db.session.query(Nation).order_by(Nation.NationName).all()
 
     return render_template(
         'employees/hiring/new.html',
@@ -424,6 +427,7 @@ def hiring_new():
         code_cores=code_cores,
         medical_centers=medical_centers,
         counties=counties,
+        nations=nations,
     )
 
 

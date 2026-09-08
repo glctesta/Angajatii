@@ -113,6 +113,17 @@
                                 <option value="">-- {{ _('Seleziona citta') }} --</option>
                             </select>
                         </div>
+                        <div class="col-md-4">
+                            <label for="nationality_id" class="form-label fw-bold">{{ _('Nazionalita') }} *</label>
+                            <select class="form-select" id="nationality_id" name="nationality_id" required onchange="onNationalityChange(this.value)">
+                                {% for n in nations %}
+                                <option value="{{ n.NationId }}" {% if n.NationId == 1 %}selected{% endif %}>{{ n.NationName }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted" id="nationalityHint" style="display:none;">
+                                <i class="bi bi-info-circle"></i> {{ _('CNP stranieri: prima cifra 7 (M) o 8 (F)') }}
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -435,8 +446,14 @@ function validateCnp() {
                 resultDiv.innerHTML = `<small class="text-danger"><i class="bi bi-x-circle"></i> ${data.error}</small>`;
                 return;
             }
-
-            resultDiv.innerHTML = `<small class="text-success"><i class="bi bi-check-circle"></i> CNP valido - ${data.sex === 'M' ? 'Maschile' : 'Femminile'} - ${data.county_name}</small>`;
+            let statusLabel = data.sex === 'M' ? 'Maschile' : 'Femminile';
+            let residencyBadge = '';
+            if (data.residency_type === 'foreign_resident') {
+                residencyBadge = ' <span class="badge bg-warning text-dark">Straniero residente</span>';
+            } else if (data.residency_type === 'stateless') {
+                residencyBadge = ' <span class="badge bg-danger">Apolide</span>';
+            }
+            resultDiv.innerHTML = `<small class="text-success"><i class="bi bi-check-circle"></i> CNP valido - ${statusLabel} - ${data.county_name}${residencyBadge}</small>`;
 
             // Auto-fill sex and birth date
             document.getElementById('sex').value = data.sex || 'M';
@@ -462,6 +479,17 @@ function validateCnp() {
         .catch(err => {
             resultDiv.innerHTML = `<small class="text-danger">Errore: ${err}</small>`;
         });
+}
+
+// ==================== NATIONALITY ====================
+function onNationalityChange(nationId) {
+    const hint = document.getElementById('nationalityHint');
+    // Romania = NationId 1
+    if (parseInt(nationId) !== 1) {
+        hint.style.display = '';
+    } else {
+        hint.style.display = 'none';
+    }
 }
 
 // ==================== CASCADING DROPDOWNS ====================
