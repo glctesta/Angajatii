@@ -141,6 +141,12 @@
                     <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
+            <li class="nav-item" data-menu-id="admin_medical" data-menu-label="{{ _('Centri Medici') }}" data-menu-icon="bi-heart-pulse">
+                <a class="nav-link text-white {% if active_page == 'admin_medical' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.medical_centers') }}">
+                    <i class="bi bi-heart-pulse me-2"></i> <span>{{ _('Centri Medici') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
+                </a>
+            </li>
             {% endif %}
         </ul>
     </div>

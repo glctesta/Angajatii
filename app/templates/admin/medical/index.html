@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% set active_page = 'admin' %}
+
+{% block title %}{{ _('Centri Medici Convenzionati') }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">{{ _('Amministrazione') }}</a></li>
+<li class="breadcrumb-item active">{{ _('Centri Medici') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="bi bi-heart-pulse me-2"></i>{{ _('Centri Medici Convenzionati') }}
+        {% if centers is defined and centers is not none %}
+        <small class="text-muted fs-6">({{ centers|length }})</small>
+        {% endif %}
+    </h2>
+    <a href="{{ url_for('admin.medical_center_create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>{{ _('Nuovo Centro') }}
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">{{ _('Nome Centro') }}</th>
+                    <th scope="col">{{ _('Indirizzo') }}</th>
+                    <th scope="col">{{ _('Telefono') }}</th>
+                    <th scope="col">{{ _('Email') }}</th>
+                    <th scope="col">{{ _('Contatto') }}</th>
+                    <th scope="col">{{ _('Contratto') }}</th>
+                    <th scope="col" class="text-center">{{ _('Attivo') }}</th>
+                    <th scope="col" class="text-center">{{ _('N. Medici') }}</th>
+                    <th scope="col" class="text-end" style="width: 200px;">{{ _('Azioni') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for center in centers %}
+                <tr>
+                    <td class="fw-semibold">{{ center.CenterName }}</td>
+                    <td>{{ center.Address or '-' }}</td>
+                    <td>
+                        {% if center.Phone %}
+                        <a href="tel:{{ center.Phone }}" class="text-decoration-none text-reset">
+                            <i class="bi bi-telephone me-1 text-muted"></i>{{ center.Phone }}
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if center.Email %}
+                        <a href="mailto:{{ center.Email }}" class="text-decoration-none">
+                            <i class="bi bi-envelope me-1 text-muted"></i>{{ center.Email }}
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>{{ center.ContactPerson or '-' }}</td>
+                    <td>
+                        {% if center.ContractStartDate or center.ContractEndDate %}
+                            <small class="text-nowrap">
+                                {{ center.ContractStartDate.strftime('%d/%m/%Y') if center.ContractStartDate else '-' }}
+                                &ndash;
+                                {{ center.ContractEndDate.strftime('%d/%m/%Y') if center.ContractEndDate else '-' }}
+                            </small>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if center.IsActive %}
+                        <span class="badge bg-success">{{ _('Attivo') }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ _('Inattivo') }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <a href="{{ url_for('admin.medical_doctors', center_id=center.MedicalCenterId) }}" class="badge bg-info text-dark text-decoration-none" title="{{ _('Visualizza medici') }}">
+                            <i class="bi bi-people me-1"></i>{{ center.doctors|length }}
+                        </a>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('admin.medical_doctors', center_id=center.MedicalCenterId) }}" class="btn btn-sm btn-outline-info me-1" title="{{ _('Visualizza Medici') }}">
+                            <i class="bi bi-people me-1"></i>{{ _('Medici') }}
+                        </a>
+                        <a href="{{ url_for('admin.medical_center_edit', id=center.MedicalCenterId) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Modifica') }}">
+                            <i class="bi bi-pencil me-1"></i>{{ _('Modifica') }}
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">
+                        <i class="bi bi-heart-pulse fs-3 d-block mb-2"></i>
+                        {{ _('Nessun centro medico trovato.') }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

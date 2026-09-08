@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% set active_page = 'admin' %}
+
+{% block title %}{{ _('Medici') }} &mdash; {{ center.CenterName }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">{{ _('Amministrazione') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.medical_centers') }}">{{ _('Centri Medici') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.medical_center_edit', id=center.MedicalCenterId) }}">{{ center.CenterName }}</a></li>
+<li class="breadcrumb-item active">{{ _('Medici') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-people me-2"></i>{{ _('Medici') }} &mdash; {{ center.CenterName }}
+            {% if doctors is defined and doctors is not none %}
+            <small class="text-muted fs-6">({{ doctors|length }})</small>
+            {% endif %}
+        </h2>
+        <div class="text-muted small">
+            {% if center.Address %}
+            <i class="bi bi-geo-alt me-1"></i>{{ center.Address }}
+            {% endif %}
+            {% if center.Phone %}
+            <span class="mx-1">&bull;</span><i class="bi bi-telephone me-1"></i>{{ center.Phone }}
+            {% endif %}
+            {% if center.Email %}
+            <span class="mx-1">&bull;</span><i class="bi bi-envelope me-1"></i>{{ center.Email }}
+            {% endif %}
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin.medical_centers') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>{{ _('Torna ai Centri') }}
+        </a>
+        <a href="{{ url_for('admin.medical_doctor_create', center_id=center.MedicalCenterId) }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>{{ _('Nuovo Medico') }}
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">{{ _('Nome') }}</th>
+                    <th scope="col">{{ _('Cognome') }}</th>
+                    <th scope="col">{{ _('Specializzazione') }}</th>
+                    <th scope="col">{{ _('Telefono') }}</th>
+                    <th scope="col">{{ _('Email') }}</th>
+                    <th scope="col" class="text-center">{{ _('Attivo') }}</th>
+                    <th scope="col" class="text-end" style="width: 120px;">{{ _('Azioni') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in doctors %}
+                <tr>
+                    <td class="fw-semibold">{{ doc.DoctorName }}</td>
+                    <td class="fw-semibold">{{ doc.DoctorSurname }}</td>
+                    <td>{{ doc.Specialization or '-' }}</td>
+                    <td>
+                        {% if doc.Phone %}
+                        <a href="tel:{{ doc.Phone }}" class="text-decoration-none text-reset">
+                            <i class="bi bi-telephone me-1 text-muted"></i>{{ doc.Phone }}
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if doc.Email %}
+                        <a href="mailto:{{ doc.Email }}" class="text-decoration-none">
+                            <i class="bi bi-envelope me-1 text-muted"></i>{{ doc.Email }}
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if doc.IsActive %}
+                        <span class="badge bg-success">{{ _('Attivo') }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ _('Inattivo') }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('admin.medical_doctor_edit', id=doc.DoctorId) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Modifica') }}">
+                            <i class="bi bi-pencil me-1"></i>{{ _('Modifica') }}
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="bi bi-person-x fs-3 d-block mb-2"></i>
+                        {{ _('Nessun medico trovato per questo centro.') }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

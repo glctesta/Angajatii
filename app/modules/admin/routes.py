@@ -152,3 +152,105 @@ def settings():
         categories.setdefault(s.Category, []).append(s)
 
     return render_template('admin/settings.html', categories=categories)
+
+
+# ==================== MEDICAL CENTERS CRUD ====================
+
+@admin_bp.route('/medical')
+def medical_centers():
+    from app.models.medical import MedicalCenter
+    centers = db.session.query(MedicalCenter).order_by(MedicalCenter.CenterName).all()
+    return render_template('admin/medical/index.html', centers=centers)
+
+
+@admin_bp.route('/medical/new', methods=['GET', 'POST'])
+def medical_center_create():
+    from app.models.medical import MedicalCenter
+    from datetime import date as date_cls
+    if request.method == 'POST':
+        center = MedicalCenter(
+            CenterName=request.form.get('CenterName', '').strip(),
+            Address=request.form.get('Address', '').strip(),
+            Phone=request.form.get('Phone', '').strip(),
+            Email=request.form.get('Email', '').strip(),
+            ContactPerson=request.form.get('ContactPerson', '').strip(),
+            ContractStartDate=date_cls.fromisoformat(request.form['ContractStartDate']) if request.form.get('ContractStartDate') else None,
+            ContractEndDate=date_cls.fromisoformat(request.form['ContractEndDate']) if request.form.get('ContractEndDate') else None,
+            IsActive='IsActive' in request.form,
+            Notes=request.form.get('Notes', '').strip(),
+        )
+        db.session.add(center)
+        db.session.commit()
+        flash(_('Centro medico creato.'), 'success')
+        return redirect(url_for('admin.medical_centers'))
+    return render_template('admin/medical/center_form.html', center=None)
+
+
+@admin_bp.route('/medical/<int:id>/edit', methods=['GET', 'POST'])
+def medical_center_edit(id):
+    from app.models.medical import MedicalCenter
+    from datetime import date as date_cls
+    center = db.session.query(MedicalCenter).get_or_404(id)
+    if request.method == 'POST':
+        center.CenterName = request.form.get('CenterName', '').strip()
+        center.Address = request.form.get('Address', '').strip()
+        center.Phone = request.form.get('Phone', '').strip()
+        center.Email = request.form.get('Email', '').strip()
+        center.ContactPerson = request.form.get('ContactPerson', '').strip()
+        center.ContractStartDate = date_cls.fromisoformat(request.form['ContractStartDate']) if request.form.get('ContractStartDate') else None
+        center.ContractEndDate = date_cls.fromisoformat(request.form['ContractEndDate']) if request.form.get('ContractEndDate') else None
+        center.IsActive = 'IsActive' in request.form
+        center.Notes = request.form.get('Notes', '').strip()
+        db.session.commit()
+        flash(_('Centro medico aggiornato.'), 'success')
+        return redirect(url_for('admin.medical_centers'))
+    return render_template('admin/medical/center_form.html', center=center)
+
+
+# ==================== MEDICAL DOCTORS CRUD ====================
+
+@admin_bp.route('/medical/<int:center_id>/doctors')
+def medical_doctors(center_id):
+    from app.models.medical import MedicalCenter, MedicalDoctor
+    center = db.session.query(MedicalCenter).get_or_404(center_id)
+    doctors = db.session.query(MedicalDoctor).filter_by(MedicalCenterId=center_id).order_by(MedicalDoctor.DoctorSurname).all()
+    return render_template('admin/medical/doctors.html', center=center, doctors=doctors)
+
+
+@admin_bp.route('/medical/<int:center_id>/doctors/new', methods=['GET', 'POST'])
+def medical_doctor_create(center_id):
+    from app.models.medical import MedicalCenter, MedicalDoctor
+    center = db.session.query(MedicalCenter).get_or_404(center_id)
+    if request.method == 'POST':
+        doctor = MedicalDoctor(
+            MedicalCenterId=center_id,
+            DoctorName=request.form.get('DoctorName', '').strip(),
+            DoctorSurname=request.form.get('DoctorSurname', '').strip(),
+            Specialization=request.form.get('Specialization', '').strip(),
+            Phone=request.form.get('Phone', '').strip(),
+            Email=request.form.get('Email', '').strip(),
+            IsActive='IsActive' in request.form,
+        )
+        db.session.add(doctor)
+        db.session.commit()
+        flash(_('Medico aggiunto.'), 'success')
+        return redirect(url_for('admin.medical_doctors', center_id=center_id))
+    return render_template('admin/medical/doctor_form.html', center=center, doctor=None)
+
+
+@admin_bp.route('/medical/doctors/<int:id>/edit', methods=['GET', 'POST'])
+def medical_doctor_edit(id):
+    from app.models.medical import MedicalCenter, MedicalDoctor
+    doctor = db.session.query(MedicalDoctor).get_or_404(id)
+    center = db.session.query(MedicalCenter).get_or_404(doctor.MedicalCenterId)
+    if request.method == 'POST':
+        doctor.DoctorName = request.form.get('DoctorName', '').strip()
+        doctor.DoctorSurname = request.form.get('DoctorSurname', '').strip()
+        doctor.Specialization = request.form.get('Specialization', '').strip()
+        doctor.Phone = request.form.get('Phone', '').strip()
+        doctor.Email = request.form.get('Email', '').strip()
+        doctor.IsActive = 'IsActive' in request.form
+        db.session.commit()
+        flash(_('Medico aggiornato.'), 'success')
+        return redirect(url_for('admin.medical_doctors', center_id=center.MedicalCenterId))
+    return render_template('admin/medical/doctor_form.html', center=center, doctor=doctor)
