@@ -77,7 +77,6 @@ class EmployeeDocument(Base):
 
     IdDocEmplolyee: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     DocID: Mapped[int] = mapped_column(Integer, nullable=False)
-    EmployeeID: Mapped[int] = mapped_column(Integer, nullable=False)
     EmployeeId: Mapped[Optional[int]] = mapped_column(ForeignKey('dbo.Employees.EmployeeId'))
     EmployeeHireHistoryId: Mapped[Optional[int]] = mapped_column(ForeignKey('dbo.EmployeeHireHistory.EmployeeHireHistoryId'))
     SkillMatrixId: Mapped[Optional[int]] = mapped_column(Integer)

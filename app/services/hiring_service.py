@@ -212,7 +212,6 @@ class HiringService:
             if data.get('doc_type_id'):
                 doc = EmployeeDocument(
                     DocID=1,
-                    EmployeeID=employee.EmployeeId,
                     EmployeeId=employee.EmployeeId,
                     EmployeeHireHistoryId=hire_history.EmployeeHireHistoryId,
                     FileName=f"ID_{employee.EmployeeNID}",
