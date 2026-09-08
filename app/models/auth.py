@@ -178,6 +178,29 @@ class User(Base, UserMixin):
         """Return list of SubCdcIds this user can access. Empty = all."""
         return [acc.SubCdcId for acc in self.cdc_access]
 
+    def get_accessible_company_ids(self) -> List[int]:
+        """Return list of EmployeerIds this user can access.
+        Admin/SuperAdmin => empty list (= all companies).
+        Others => companies from their Employee hire history.
+        """
+        if self.IsSuperAdmin or self.has_role('admin'):
+            return []  # empty = all
+        if not self.EmployeeId or not self.employee:
+            return []  # no linked employee, show nothing (handled in route)
+        from app.extensions import db
+        from app.models.employee import EmployeeHireHistory
+        rows = db.session.query(
+            EmployeeHireHistory.EmployeerId
+        ).filter(
+            EmployeeHireHistory.EmployeeId == self.EmployeeId,
+        ).distinct().all()
+        return [r[0] for r in rows]
+
+    @property
+    def can_see_all_companies(self) -> bool:
+        """Admin and SuperAdmin can see all companies."""
+        return self.IsSuperAdmin or self.has_role('admin')
+
     def has_license_level(self, level: str) -> bool:
         """Check if any active license supports the given level."""
         from app.models.license import License

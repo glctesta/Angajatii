@@ -60,7 +60,9 @@
                     <tr>
                         <th class="text-muted">{{ _('Stato') }}</th>
                         <td>
-                            {% if active_contracts %}
+                            {% if employee.NotValidForLegalDoc %}
+                            <span class="badge bg-warning text-dark">{{ _('Non valido per doc. legali') }}</span>
+                            {% elif active_contracts %}
                             <span class="badge bg-success">{{ _('Attivo') }}</span>
                             {% else %}
                             <span class="badge bg-secondary">{{ _('Non attivo') }}</span>
@@ -68,6 +70,11 @@
                         </td>
                     </tr>
                 </table>
+            </div>
+            <div class="card-footer text-end">
+                <a href="{{ url_for('employees.edit', id=employee.EmployeeId) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>{{ _('Modifica') }}
+                </a>
             </div>
         </div>
 

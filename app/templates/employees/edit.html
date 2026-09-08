@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% set active_page = 'employees' %}
+
+{% block title %}{{ _('Modifica') }} - {{ employee.full_name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">{{ _('Dipendenti') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('employees.detail', id=employee.EmployeeId) }}">{{ employee.full_name }}</a></li>
+<li class="breadcrumb-item active">{{ _('Modifica') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>{{ _('Modifica Dipendente') }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">{{ _('Cognome') }}</label>
+                            <input type="text" name="EmployeeSurname" class="form-control" value="{{ employee.EmployeeSurname }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">{{ _('Nome') }}</label>
+                            <input type="text" name="EmployeeName" class="form-control" value="{{ employee.EmployeeName }}" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">{{ _('Cognome precedente') }}</label>
+                            <input type="text" name="EmployeeOldSurName" class="form-control" value="{{ employee.EmployeeOldSurName or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">{{ _('Sesso') }}</label>
+                            <select name="EmployeeSex" class="form-select">
+                                <option value="M" {% if employee.EmployeeSex == 'M' %}selected{% endif %}>{{ _('Maschio') }}</option>
+                                <option value="F" {% if employee.EmployeeSex == 'F' %}selected{% endif %}>{{ _('Femmina') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ _('CNP') }}</label>
+                        <input type="text" class="form-control" value="{{ employee.EmployeeNID }}" disabled>
+                        <div class="form-text">{{ _('Il CNP non e modificabile') }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ _('Data nascita') }}</label>
+                        <input type="text" class="form-control" value="{{ employee.EmployeeBirthDate.strftime('%d/%m/%Y') if employee.EmployeeBirthDate else '' }}" disabled>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="NotValidForLegalDoc" id="nvFlag" {% if employee.NotValidForLegalDoc %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold" for="nvFlag">
+                                {{ _('Non valido per documenti legali') }}
+                            </label>
+                        </div>
+                        <div class="form-text text-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            {{ _('I dipendenti con questo flag attivo non vengono contati tra i dipendenti attivi e non sono validi per la generazione di documenti legali.') }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('employees.detail', id=employee.EmployeeId) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i>{{ _('Annulla') }}
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>{{ _('Salva') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
