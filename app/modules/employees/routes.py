@@ -413,7 +413,6 @@ def hiring_new():
     registry_types = db.session.query(RegistryType).order_by(RegistryType.Acronim).all()
     code_cores = db.session.query(CodeCore).filter(CodeCore.DateOut.is_(None)).order_by(CodeCore.CoreCode).all()
     medical_centers = db.session.query(MedicalCenter).filter_by(IsActive=True).all()
-    counties = db.session.query(County).order_by(County.CountyName).all()
     nations = db.session.query(Nation).order_by(Nation.NationName).all()
 
     return render_template(
@@ -426,7 +425,6 @@ def hiring_new():
         registry_types=registry_types,
         code_cores=code_cores,
         medical_centers=medical_centers,
-        counties=counties,
         nations=nations,
     )
 
@@ -453,6 +451,16 @@ def api_get_functions():
         'name': f.FunctionDescription,
         'code': f.FunctionCode
     } for f in functions])
+
+
+@employees_bp.route('/api/counties/<int:nation_id>')
+@login_required
+def api_get_counties(nation_id):
+    """Get counties for a given nation."""
+    from flask import jsonify
+    from app.models import County
+    counties = db.session.query(County).filter_by(NationId=nation_id).order_by(County.CountyName).all()
+    return jsonify([{'id': c.CountyId, 'name': c.CountyName} for c in counties])
 
 
 @employees_bp.route('/api/towns/<int:county_id>')

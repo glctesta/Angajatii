@@ -99,23 +99,8 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label for="birth_county" class="form-label">{{ _('Contea di nascita') }}</label>
-                            <select class="form-select" id="birth_county" onchange="loadTowns(this.value, 'birth_town_id')">
-                                <option value="">-- {{ _('Seleziona contea') }} --</option>
-                                {% for c in counties %}
-                                <option value="{{ c.CountyId }}">{{ c.CountyName }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="birth_town_id" class="form-label">{{ _('Luogo di nascita') }}</label>
-                            <select class="form-select" id="birth_town_id" name="birth_town_id">
-                                <option value="">-- {{ _('Seleziona citta') }} --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="nationality_id" class="form-label fw-bold">{{ _('Nazionalita') }} *</label>
-                            <select class="form-select" id="nationality_id" name="nationality_id" required onchange="onNationalityChange(this.value)">
+                            <label for="nationality_id" class="form-label fw-bold">{{ _('Nazione di nascita') }} *</label>
+                            <select class="form-select" id="nationality_id" name="nationality_id" required onchange="onNationChange(this.value)">
                                 {% for n in nations %}
                                 <option value="{{ n.NationId }}" {% if n.NationId == 1 %}selected{% endif %}>{{ n.NationName }}</option>
                                 {% endfor %}
@@ -123,6 +108,18 @@
                             <small class="text-muted" id="nationalityHint" style="display:none;">
                                 <i class="bi bi-info-circle"></i> {{ _('CNP stranieri: prima cifra 7 (M) o 8 (F)') }}
                             </small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="birth_county" class="form-label">{{ _('Contea di nascita') }}</label>
+                            <select class="form-select" id="birth_county" onchange="loadTowns(this.value, 'birth_town_id')">
+                                <option value="">-- {{ _('Prima seleziona nazione') }} --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="birth_town_id" class="form-label">{{ _('Citta di nascita') }}</label>
+                            <select class="form-select" id="birth_town_id" name="birth_town_id">
+                                <option value="">-- {{ _('Prima seleziona contea') }} --</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -192,16 +189,23 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-3">
+                            <label class="form-label">{{ _('Nazione') }}</label>
+                            <select class="form-select" id="addr_nation" onchange="loadCounties(this.value, 'addr_county', 'addr_town_id')">
+                                {% for n in nations %}
+                                <option value="{{ n.NationId }}" {% if n.NationId == 1 %}selected{% endif %}>{{ n.NationName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label">{{ _('Contea') }}</label>
                             <select class="form-select" id="addr_county" onchange="loadTowns(this.value, 'addr_town_id')">
-                                <option value="">-- {{ _('Seleziona') }} --</option>
-                                {% for c in counties %}<option value="{{ c.CountyId }}">{{ c.CountyName }}</option>{% endfor %}
+                                <option value="">-- {{ _('Caricamento...') }} --</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">{{ _('Citta') }}</label>
                             <select class="form-select" id="addr_town_id" name="addr_town_id">
-                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                <option value="">-- {{ _('Prima seleziona contea') }} --</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -481,16 +485,39 @@ function validateCnp() {
         });
 }
 
-// ==================== NATIONALITY ====================
-function onNationalityChange(nationId) {
+// ==================== NAZIONE → CONTEA → CITTA CASCADE ====================
+function onNationChange(nationId) {
     const hint = document.getElementById('nationalityHint');
     // Romania = NationId 1
-    if (parseInt(nationId) !== 1) {
-        hint.style.display = '';
-    } else {
-        hint.style.display = 'none';
-    }
+    hint.style.display = parseInt(nationId) !== 1 ? '' : 'none';
+    // Load counties for birth section
+    loadCounties(nationId, 'birth_county', 'birth_town_id');
 }
+
+function loadCounties(nationId, countySelectId, townSelectId) {
+    const sel = document.getElementById(countySelectId);
+    const townSel = document.getElementById(townSelectId);
+    sel.innerHTML = '<option value="">-- Caricamento... --</option>';
+    townSel.innerHTML = '<option value="">-- Prima seleziona contea --</option>';
+    if (!nationId) return;
+
+    fetch(`{{ url_for('employees.index') }}api/counties/${nationId}`)
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '<option value="">-- Seleziona contea --</option>';
+            data.forEach(c => {
+                sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+        });
+}
+
+// Auto-load Romania counties on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Birth section - load Romania counties
+    loadCounties(1, 'birth_county', 'birth_town_id');
+    // Address section - load Romania counties
+    loadCounties(1, 'addr_county', 'addr_town_id');
+});
 
 // ==================== CASCADING DROPDOWNS ====================
 function loadSubCdcs(cdcId) {
