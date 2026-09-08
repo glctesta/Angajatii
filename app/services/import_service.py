@@ -256,14 +256,14 @@ class ImportService:
 
     def _import_code_cores(self, cursor):
         try:
-            cursor.execute('SELECT CodeId, CodeName FROM dbo.CodeCores')
+            cursor.execute('SELECT CodeCoresId, Code, CodeDescription FROM dbo.CodeCores')
         except pyodbc.ProgrammingError:
             return 0
         count = 0
         for row in cursor.fetchall():
-            existing = db.session.query(CodeCore).filter_by(CodeId=row.CodeId).first()
+            existing = db.session.query(CodeCore).filter_by(CodeCoresId=row.CodeCoresId).first()
             if not existing:
-                db.session.add(CodeCore(CodeId=row.CodeId, CodeName=row.CodeName))
+                db.session.add(CodeCore(CodeCoresId=row.CodeCoresId, CoreCode=row.Code, CoreDescription=row.CodeDescription))
                 count += 1
         db.session.commit()
         return count
@@ -381,50 +381,61 @@ class ImportService:
                    NrDeciziaIncetareId, RepartitionDecizionId, RecordedIntoRevisal, JustForReport, EndWorkDateContract
             FROM dbo.EmployeeHireHistory
         ''')
+        rows = cursor.fetchall()
         count = 0
-        for row in cursor.fetchall():
-            existing = db.session.query(EmployeeHireHistory).filter_by(EmployeeHireHistoryId=row.EmployeeHireHistoryId).first()
-            if not existing:
-                db.session.add(EmployeeHireHistory(
-                    EmployeeHireHistoryId=row.EmployeeHireHistoryId,
-                    EmployeeId=row.EmployeeId,
-                    EmployeerId=row.EmployeerId,
-                    IdRegistroOffer=row.IdRegistroOffer,
-                    IdRegistroCm=row.IdRegistroCm,
-                    ContractTypeId=row.ContractTypeId,
-                    HireDate=row.HireDate,
-                    StartWorkDate=row.StartWorkDate,
-                    EndWorkDate=row.EndWorkDate,
-                    DateSys=row.DateSys,
-                    HourPerDay=row.HourPerDay,
-                    HolidayPerYear=row.HolidayPerYear,
-                    CoreHiringCode=row.CoreHiringCode,
-                    HiringSalary=row.HiringSalary,
-                    NoWorkContract=row.NoWorkContract,
-                    DateOut=row.DateOut,
-                    ChiusoPerModifica=row.ChiusoPerModifica,
-                    ModificatoDa=row.ModificatoDa,
-                    AccessID=row.AccessID,
-                    TestPeriod=row.TestPeriod,
-                    NoNotaLichidare=row.NoNotaLichidare,
-                    DataNotaLichidare=row.DataNotaLichidare,
-                    RichiestaLicenziamento=row.RichiestaLicenziamento,
-                    DataRichiestaLicenziamento=row.DataRichiestaLicenziamento,
-                    ArtLegaleLicenziamento=row.ArtLegaleLicenziamento,
-                    IdRichiestaLicenziamento=row.IdRichiestaLicenziamento,
-                    ConsensoInformato=row.ConsensoInformato,
-                    CodeCoresId=row.CodeCoresId,
-                    SedeLavoroId=row.SedeLavoroId,
-                    ArticoloLegaleId=row.ArticoloLegaleId,
-                    NotaDeLichidareId=row.NotaDeLichidareId,
-                    NrDeciziaIncetareId=row.NrDeciziaIncetareId,
-                    RepartitionDecizionId=row.RepartitionDecizionId,
-                    RecordedIntoRevisal=row.RecordedIntoRevisal,
-                    JustForReport=row.JustForReport,
-                    EndWorkDateContract=row.EndWorkDateContract
-                ))
-                count += 1
+        # Disable FK checks for bulk import
+        db.session.execute(db.text('ALTER TABLE dbo.EmployeeHireHistory NOCHECK CONSTRAINT ALL'))
         db.session.commit()
+        with db.session.no_autoflush:
+            for row in rows:
+                existing = db.session.query(EmployeeHireHistory).filter_by(EmployeeHireHistoryId=row.EmployeeHireHistoryId).first()
+                if not existing:
+                    db.session.add(EmployeeHireHistory(
+                        EmployeeHireHistoryId=row.EmployeeHireHistoryId,
+                        EmployeeId=row.EmployeeId,
+                        EmployeerId=row.EmployeerId,
+                        IdRegistroOffer=row.IdRegistroOffer,
+                        IdRegistroCm=row.IdRegistroCm,
+                        ContractTypeId=row.ContractTypeId,
+                        HireDate=row.HireDate,
+                        StartWorkDate=row.StartWorkDate,
+                        EndWorkDate=row.EndWorkDate,
+                        DateSys=row.DateSys,
+                        HourPerDay=row.HourPerDay,
+                        HolidayPerYear=row.HolidayPerYear,
+                        CoreHiringCode=row.CoreHiringCode,
+                        HiringSalary=row.HiringSalary,
+                        NoWorkContract=row.NoWorkContract,
+                        DateOut=row.DateOut,
+                        ChiusoPerModifica=row.ChiusoPerModifica,
+                        ModificatoDa=row.ModificatoDa,
+                        AccessID=row.AccessID,
+                        TestPeriod=row.TestPeriod,
+                        NoNotaLichidare=row.NoNotaLichidare,
+                        DataNotaLichidare=row.DataNotaLichidare,
+                        RichiestaLicenziamento=row.RichiestaLicenziamento,
+                        DataRichiestaLicenziamento=row.DataRichiestaLicenziamento,
+                        ArtLegaleLicenziamento=row.ArtLegaleLicenziamento,
+                        IdRichiestaLicenziamento=row.IdRichiestaLicenziamento,
+                        ConsensoInformato=row.ConsensoInformato,
+                        CodeCoresId=row.CodeCoresId,
+                        SedeLavoroId=row.SedeLavoroId,
+                        ArticoloLegaleId=row.ArticoloLegaleId,
+                        NotaDeLichidareId=row.NotaDeLichidareId,
+                        NrDeciziaIncetareId=row.NrDeciziaIncetareId,
+                        RepartitionDecizionId=row.RepartitionDecizionId,
+                        RecordedIntoRevisal=row.RecordedIntoRevisal,
+                        JustForReport=row.JustForReport,
+                        EndWorkDateContract=row.EndWorkDateContract
+                    ))
+                    count += 1
+            db.session.commit()
+        # Re-enable FK checks (without validation of existing data)
+        try:
+            db.session.execute(db.text('ALTER TABLE dbo.EmployeeHireHistory WITH NOCHECK CHECK CONSTRAINT ALL'))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         return count
 
     def _import_cdc_stories(self, cursor):
@@ -432,20 +443,29 @@ class ImportService:
             SELECT EmployeeCdcStoryId, EmployeeHireHistoryId, SubCdcId, FunctionId, DateIn, DateOut
             FROM dbo.EmployeeCdcStories
         ''')
+        rows = cursor.fetchall()
         count = 0
-        for row in cursor.fetchall():
-            existing = db.session.query(EmployeeCdcStory).filter_by(EmployeeCdcStoryId=row.EmployeeCdcStoryId).first()
-            if not existing:
-                db.session.add(EmployeeCdcStory(
-                    EmployeeCdcStoryId=row.EmployeeCdcStoryId,
-                    EmployeeHireHistoryId=row.EmployeeHireHistoryId,
-                    SubCdcId=row.SubCdcId,
-                    FunctionId=row.FunctionId,
-                    DateIn=row.DateIn,
-                    DateOut=row.DateOut
-                ))
-                count += 1
+        db.session.execute(db.text('ALTER TABLE dbo.EmployeeCdcStories NOCHECK CONSTRAINT ALL'))
         db.session.commit()
+        with db.session.no_autoflush:
+            for row in rows:
+                existing = db.session.query(EmployeeCdcStory).filter_by(EmployeeCdcStoryId=row.EmployeeCdcStoryId).first()
+                if not existing:
+                    db.session.add(EmployeeCdcStory(
+                        EmployeeCdcStoryId=row.EmployeeCdcStoryId,
+                        EmployeeHireHistoryId=row.EmployeeHireHistoryId,
+                        SubCdcId=row.SubCdcId,
+                        FunctionId=row.FunctionId,
+                        DateIn=row.DateIn,
+                        DateOut=row.DateOut
+                    ))
+                    count += 1
+            db.session.commit()
+        try:
+            db.session.execute(db.text('ALTER TABLE dbo.EmployeeCdcStories WITH NOCHECK CHECK CONSTRAINT ALL'))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         return count
 
     def _import_badge_history(self, cursor):
