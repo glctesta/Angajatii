@@ -57,11 +57,13 @@ def create_app(config_name: str = None) -> Flask:
     # --- Register Blueprints ---
     from app.modules.auth import auth_bp
     from app.modules.dashboard import dashboard_bp
+    from app.modules.employees import employees_bp
     from app.modules.needs import needs_bp
     from app.modules.admin import admin_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(employees_bp)
     app.register_blueprint(needs_bp)
     app.register_blueprint(admin_bp)
 

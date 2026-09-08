@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% set active_page = 'employees' %}
+
+{% block title %}{{ _('Dipendenti') }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item active">{{ _('Dipendenti') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people me-2"></i>{{ _('Dipendenti') }} <small class="text-muted fs-6">({{ pagination.total }})</small></h2>
+</div>
+
+<!-- Search & Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">{{ _('Cerca') }}</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="{{ _('Cognome, Nome o CNP...') }}" value="{{ search }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ _('Stato') }}</label>
+                <select name="status" class="form-select">
+                    <option value="all" {% if status == 'all' %}selected{% endif %}>{{ _('Tutti') }}</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>{{ _('Attivi') }}</option>
+                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>{{ _('Non attivi') }}</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">{{ _('Per pagina') }}</label>
+                <select name="per_page" class="form-select">
+                    {% for n in [25, 50, 100] %}
+                    <option value="{{ n }}" {% if pagination.per_page == n %}selected{% endif %}>{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i>{{ _('Filtra') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 60px;">ID</th>
+                    <th>{{ _('Cognome') }}</th>
+                    <th>{{ _('Nome') }}</th>
+                    <th>{{ _('CNP') }}</th>
+                    <th>{{ _('Sesso') }}</th>
+                    <th>{{ _('Data Nascita') }}</th>
+                    <th class="text-center">{{ _('Stato') }}</th>
+                    <th class="text-center">{{ _('Azioni') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td class="text-muted">{{ emp.EmployeeId }}</td>
+                    <td class="fw-semibold">{{ emp.EmployeeSurname }}</td>
+                    <td>{{ emp.EmployeeName }}</td>
+                    <td><code>{{ emp.EmployeeNID }}</code></td>
+                    <td>
+                        {% if emp.EmployeeSex == 'M' %}
+                        <i class="bi bi-gender-male text-primary"></i>
+                        {% elif emp.EmployeeSex == 'F' %}
+                        <i class="bi bi-gender-female text-danger"></i>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>{{ emp.EmployeeBirthDate.strftime('%d/%m/%Y') if emp.EmployeeBirthDate else '-' }}</td>
+                    <td class="text-center">
+                        {% set active_hire = emp.hire_history.filter(none) %}
+                        {% if emp.hire_history.filter_by(EndWorkDate=None).first() %}
+                        <span class="badge bg-success">{{ _('Attivo') }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ _('Non attivo') }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <a href="{{ url_for('employees.detail', id=emp.EmployeeId) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Scheda') }}">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        {{ _('Nessun dipendente trovato') }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('employees.index', page=pagination.prev_num, q=search, status=status, per_page=pagination.per_page) }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('employees.index', page=p, q=search, status=status, per_page=pagination.per_page) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('employees.index', page=pagination.next_num, q=search, status=status, per_page=pagination.per_page) }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

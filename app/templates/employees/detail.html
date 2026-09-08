@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% set active_page = 'employees' %}
+
+{% block title %}{{ employee.full_name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">{{ _('Dipendenti') }}</a></li>
+<li class="breadcrumb-item active">{{ employee.full_name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left: Employee Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    {% if employee.EmployeeSex == 'M' %}
+                    <i class="bi bi-person me-2"></i>
+                    {% else %}
+                    <i class="bi bi-person me-2"></i>
+                    {% endif %}
+                    {{ employee.full_name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm mb-0">
+                    <tr>
+                        <th class="text-muted" style="width: 40%;">ID</th>
+                        <td>{{ employee.EmployeeId }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('CNP') }}</th>
+                        <td><code>{{ employee.EmployeeNID }}</code></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Cognome') }}</th>
+                        <td>{{ employee.EmployeeSurname }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Nome') }}</th>
+                        <td>{{ employee.EmployeeName }}</td>
+                    </tr>
+                    {% if employee.EmployeeOldSurName %}
+                    <tr>
+                        <th class="text-muted">{{ _('Cognome prec.') }}</th>
+                        <td>{{ employee.EmployeeOldSurName }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th class="text-muted">{{ _('Data nascita') }}</th>
+                        <td>{{ employee.EmployeeBirthDate.strftime('%d/%m/%Y') if employee.EmployeeBirthDate else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Sesso') }}</th>
+                        <td>
+                            {% if employee.EmployeeSex == 'M' %}
+                            <i class="bi bi-gender-male text-primary"></i> {{ _('Maschio') }}
+                            {% elif employee.EmployeeSex == 'F' %}
+                            <i class="bi bi-gender-female text-danger"></i> {{ _('Femmina') }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">{{ _('Stato') }}</th>
+                        <td>
+                            {% if active_contract %}
+                            <span class="badge bg-success">{{ _('Attivo') }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ _('Non attivo') }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Contract History -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>{{ _('Storico Contratti') }}</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ _('Data Assunzione') }}</th>
+                            <th>{{ _('Inizio Lavoro') }}</th>
+                            <th>{{ _('Fine Lavoro') }}</th>
+                            <th>{{ _('Ore/giorno') }}</th>
+                            <th>{{ _('N. Contratto') }}</th>
+                            <th class="text-center">{{ _('Stato') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in contracts %}
+                        <tr {% if c.EndWorkDate is none %}class="table-success"{% endif %}>
+                            <td>{{ c.HireDate.strftime('%d/%m/%Y') if c.HireDate else '-' }}</td>
+                            <td>{{ c.StartWorkDate.strftime('%d/%m/%Y') if c.StartWorkDate else '-' }}</td>
+                            <td>{{ c.EndWorkDate.strftime('%d/%m/%Y') if c.EndWorkDate else '-' }}</td>
+                            <td>{{ c.HourPerDay or '-' }}</td>
+                            <td><small>{{ c.NoWorkContract or '-' }}</small></td>
+                            <td class="text-center">
+                                {% if c.EndWorkDate is none %}
+                                <span class="badge bg-success">{{ _('Attivo') }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ _('Chiuso') }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-3">{{ _('Nessun contratto trovato') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>{{ _('Torna alla lista') }}
+</a>
+{% endblock %}
