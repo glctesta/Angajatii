@@ -1,8 +1,9 @@
 :root {
     --primary-color: #1a5276;
     --secondary-color: #2980b9;
-    --sidebar-width: 250px;
-    --sidebar-collapsed-width: 70px;
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 60px;
+    --sidebar-transition: 0.25s ease;
 }
 
 [data-theme="dark"] {
@@ -19,30 +20,116 @@ body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
 }
 
-/* Sidebar Styling */
+/* ==================== SIDEBAR ==================== */
 .sidebar {
     background-color: #212529 !important;
     width: var(--sidebar-width);
     min-height: 100vh;
-    transition: width 0.3s ease;
-    z-index: 1000;
+    transition: width var(--sidebar-transition), transform var(--sidebar-transition);
+    z-index: 1040;
+    position: fixed;
+    left: 0;
+    top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
+/* Collapsed state */
 .sidebar.collapsed {
     width: var(--sidebar-collapsed-width);
 }
 
 .sidebar.collapsed .sidebar-title,
 .sidebar.collapsed .nav-link span,
-.sidebar.collapsed .sidebar-heading {
-    display: none;
+.sidebar.collapsed .sidebar-heading,
+.sidebar.collapsed .fav-star,
+.sidebar.collapsed .sidebar-favorites,
+.sidebar.collapsed .sidebar-pin-btn,
+.sidebar.collapsed .sidebar-manage-fav {
+    display: none !important;
 }
 
+.sidebar.collapsed .sidebar-brand {
+    justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-header {
+    justify-content: center !important;
+    padding: 0.75rem 0.5rem !important;
+}
+
+.sidebar.collapsed .nav-link {
+    text-align: center;
+    padding: 0.7rem 0;
+    justify-content: center;
+}
+
+.sidebar.collapsed .nav-link i.me-2 {
+    margin: 0 !important;
+}
+
+/* Hidden state (not pinned, mouse away) */
+.sidebar.hidden {
+    transform: translateX(calc(-1 * var(--sidebar-width) + 6px));
+}
+
+.sidebar.hidden:hover,
+.sidebar.hidden.peek {
+    transform: translateX(0);
+}
+
+.sidebar.hidden .sidebar-peek-strip {
+    display: block;
+}
+
+/* Peek strip (visible when sidebar hidden) */
+.sidebar-peek-strip {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.sidebar-peek-strip:hover {
+    opacity: 1;
+}
+
+/* Main content offset */
+.main-content {
+    margin-left: var(--sidebar-width);
+    transition: margin-left var(--sidebar-transition);
+}
+
+.sidebar.collapsed ~ .main-content,
+body.sidebar-collapsed .main-content {
+    margin-left: var(--sidebar-collapsed-width);
+}
+
+.sidebar.hidden ~ .main-content,
+body.sidebar-hidden .main-content {
+    margin-left: 6px;
+}
+
+/* Nav links */
 .sidebar .nav-link {
-    padding: 0.8rem 1rem;
-    margin-bottom: 0.2rem;
-    color: rgba(255, 255, 255, 0.8);
-    transition: all 0.2s;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.15rem;
+    color: rgba(255, 255, 255, 0.75);
+    transition: all 0.15s;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    position: relative;
 }
 
 .sidebar .nav-link:hover,
@@ -51,20 +138,63 @@ body {
     background-color: var(--primary-color) !important;
 }
 
-.sidebar .nav-link i {
-    font-size: 1.2rem;
-}
-
-.sidebar.collapsed .nav-link {
+.sidebar .nav-link i:first-child {
+    font-size: 1.1rem;
+    width: 22px;
     text-align: center;
-    padding: 0.8rem 0;
 }
 
-.sidebar.collapsed .nav-link i {
-    margin: 0 !important;
+/* Favorite star */
+.fav-star {
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+    cursor: pointer;
+    color: rgba(255,255,255,0.4);
 }
 
-/* Cards */
+.nav-item:hover .fav-star {
+    opacity: 1;
+}
+
+.fav-star.active {
+    opacity: 1;
+    color: #ffc107 !important;
+}
+
+.fav-star.active::before {
+    content: "\F586"; /* bi-star-fill */
+}
+
+/* Pin button */
+.sidebar-pin-btn {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.4rem;
+    opacity: 0.6;
+    transition: opacity 0.15s, transform 0.15s;
+}
+
+.sidebar-pin-btn:hover {
+    opacity: 1;
+}
+
+.sidebar-pin-btn.pinned {
+    opacity: 1;
+    transform: rotate(45deg);
+    color: #ffc107 !important;
+}
+
+/* Favorites section */
+.sidebar-favorites .nav-link {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+}
+
+.sidebar-favorites .nav-link i {
+    font-size: 0.95rem;
+}
+
+/* ==================== CARDS ==================== */
 .card {
     border: none;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
@@ -91,7 +221,7 @@ body {
     margin: 0 auto;
 }
 
-/* Tables */
+/* ==================== TABLES ==================== */
 .table {
     vertical-align: middle;
 }
@@ -105,19 +235,23 @@ body {
     box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.05);
 }
 
-/* Responsive */
+/* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
     .sidebar {
+        transform: translateX(-100%);
         position: fixed;
-        left: -250px;
     }
     
     .sidebar.show {
-        left: 0;
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0 !important;
     }
 }
 
-/* Print */
+/* ==================== PRINT ==================== */
 @media print {
     .sidebar, .top-navbar, .footer {
         display: none !important;

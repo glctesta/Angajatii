@@ -1,33 +1,57 @@
-<nav id="sidebar" class="sidebar bg-dark text-white" style="width: 250px; min-height: 100vh; transition: all 0.3s;">
-    <div class="sidebar-header d-flex align-items-center justify-content-center p-3 border-bottom border-secondary">
-        <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="{{ _('Logo') }}" class="logo-img" style="max-height: 40px;">
-        <span class="sidebar-title ms-2 fw-bold text-white">{{ _('Employees Mgmt') }}</span>
+<nav id="sidebar" class="sidebar bg-dark text-white">
+    <div class="sidebar-header d-flex align-items-center justify-content-between p-3 border-bottom border-secondary">
+        <div class="d-flex align-items-center sidebar-brand">
+            <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="{{ _('Logo') }}" class="logo-img" style="max-height: 36px;">
+            <span class="sidebar-title ms-2 fw-bold text-white">{{ _('Employees') }}</span>
+        </div>
+        <button id="sidebarPin" class="btn btn-sm btn-outline-light border-0 sidebar-pin-btn" title="{{ _('Fissa / Nascondi sidebar') }}">
+            <i class="bi bi-pin-angle" id="pinIcon"></i>
+        </button>
     </div>
+
+    <!-- Favorites Section -->
+    <div id="favoritesSection" class="sidebar-favorites border-bottom border-secondary" style="display:none;">
+        <div class="px-3 pt-2 pb-1 d-flex align-items-center justify-content-between">
+            <h6 class="sidebar-heading text-secondary text-uppercase m-0" style="font-size: 0.7rem;">
+                <i class="bi bi-star-fill text-warning me-1"></i><span>{{ _('Preferiti') }}</span>
+            </h6>
+            <button id="manageFavBtn" class="btn btn-sm text-secondary border-0 p-0 sidebar-manage-fav" title="{{ _('Gestisci preferiti') }}">
+                <i class="bi bi-gear-fill" style="font-size:0.75rem;"></i>
+            </button>
+        </div>
+        <ul id="favoritesList" class="nav flex-column px-2 pb-2"></ul>
+    </div>
+
     <div class="sidebar-menu p-3">
         <ul class="nav flex-column">
-            <li class="nav-item">
+            <li class="nav-item" data-menu-id="dashboard" data-menu-label="{{ _('Dashboard') }}" data-menu-icon="bi-speedometer2">
                 <a class="nav-link text-white {% if active_page == 'dashboard' %}active bg-primary rounded{% endif %}" href="{{ url_for('dashboard.index') }}">
                     <i class="bi bi-speedometer2 me-2"></i> <span>{{ _('Dashboard') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" data-menu-id="employees" data-menu-label="{{ _('Dipendenti') }}" data-menu-icon="bi-people">
                 <a class="nav-link text-white {% if active_page == 'employees' %}active bg-primary rounded{% endif %}" href="{{ url_for('employees.index') }}">
                     <i class="bi bi-people me-2"></i> <span>{{ _('Dipendenti') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" data-menu-id="contracts" data-menu-label="{{ _('Contratti') }}" data-menu-icon="bi-file-earmark-text">
                 <a class="nav-link text-white {% if active_page == 'contracts' %}active bg-primary rounded{% endif %}" href="#">
                     <i class="bi bi-file-earmark-text me-2"></i> <span>{{ _('Contratti') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" data-menu-id="organization" data-menu-label="{{ _('Organizzazione') }}" data-menu-icon="bi-diagram-3">
                 <a class="nav-link text-white {% if active_page == 'organization' %}active bg-primary rounded{% endif %}" href="#">
                     <i class="bi bi-diagram-3 me-2"></i> <span>{{ _('Organizzazione') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" data-menu-id="needs" data-menu-label="{{ _('Fabbisogno') }}" data-menu-icon="bi-graph-up-arrow">
                 <a class="nav-link text-white {% if active_page == 'needs' %}active bg-primary rounded{% endif %}" href="{{ url_for('needs.index') }}">
                     <i class="bi bi-graph-up-arrow me-2"></i> <span>{{ _('Fabbisogno') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
 
@@ -35,19 +59,22 @@
             <li class="nav-item mt-4">
                 <h6 class="sidebar-heading px-3 text-secondary text-uppercase" style="font-size: 0.8rem;">{{ _('Amministrazione') }}</h6>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" data-menu-id="admin" data-menu-label="{{ _('Impostazioni') }}" data-menu-icon="bi-gear">
                 <a class="nav-link text-white {% if active_page == 'admin' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.index') }}">
                     <i class="bi bi-gear me-2"></i> <span>{{ _('Impostazioni') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" data-menu-id="admin_users" data-menu-label="{{ _('Utenti') }}" data-menu-icon="bi-person-gear">
                 <a class="nav-link text-white {% if active_page == 'admin_users' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.users_list') }}">
                     <i class="bi bi-person-gear me-2"></i> <span>{{ _('Utenti') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" data-menu-id="admin_import" data-menu-label="{{ _('Importazione') }}" data-menu-icon="bi-cloud-arrow-down">
                 <a class="nav-link text-white {% if active_page == 'admin_import' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.import_page') }}">
                     <i class="bi bi-cloud-arrow-down me-2"></i> <span>{{ _('Importazione') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
             {% endif %}

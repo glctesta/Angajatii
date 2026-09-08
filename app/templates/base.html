@@ -15,11 +15,11 @@
     {% block head %}{% endblock %}
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token() }}"}'>
-    <div class="wrapper d-flex">
+    <div class="wrapper">
         <!-- Sidebar -->
         {% include 'components/sidebar.html' %}
         
-        <div class="main-content flex-grow-1 d-flex flex-column" style="min-height: 100vh; overflow-x: hidden;">
+        <div class="main-content d-flex flex-column" style="min-height: 100vh; overflow-x: hidden;">
             <!-- Navbar -->
             {% include 'components/navbar.html' %}
             
