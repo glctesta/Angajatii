@@ -317,9 +317,81 @@ def hiring_new():
                 employee = db.session.query(Employee).get(result['employee_id'])
                 user, password = HiringService.create_user_account(employee, data['email'])
 
+                # Generate documents
+                try:
+                    from app.services.document_generator import DocumentGenerator
+                    from app.models import ContractType, Town, County, EmployeeAddress
+                    doc_gen = DocumentGenerator()
+
+                    # Build hiring_data context for document generation
+                    hire_history = db.session.query(EmployeeHireHistory).get(result['hire_history_id'])
+                    company = db.session.query(Employeer).get(data['employeer_id'])
+                    ct = db.session.query(ContractType).get(data['contract_type_id'])
+                    func = db.session.query(Function).get(data['function_id'])
+
+                    # Get address info
+                    addr = db.session.query(EmployeeAddress).filter_by(
+                        EmployeeId=employee.EmployeeId
+                    ).order_by(EmployeeAddress.AddressId.desc()).first()
+
+                    town_name = county_name = ''
+                    if addr and addr.TownAddressId:
+                        town = db.session.query(Town).get(addr.TownAddressId)
+                        if town:
+                            town_name = town.TownName
+                            county = db.session.query(County).get(town.CountyId)
+                            if county:
+                                county_name = county.CountyName
+
+                    hiring_data = {
+                        'employee_id': employee.EmployeeId,
+                        'employee_name': employee.EmployeeName,
+                        'employee_surname': employee.EmployeeSurname,
+                        'cnp': employee.EmployeeNID,
+                        'sex': employee.EmployeeSex,
+                        'town_name': town_name,
+                        'county_name': county_name,
+                        'street': addr.Street if addr else '',
+                        'numero_civico': addr.NumeroCivico if addr else '',
+                        'bloc': addr.Bloc if addr else '',
+                        'piano': addr.Piano if addr else '',
+                        'apartment': addr.Apartment if addr else '',
+                        'full_address': f"{addr.Street or ''} {addr.NumeroCivico or ''}, {town_name}".strip() if addr else '',
+                        'doc_type_name': 'C.I.',
+                        'doc_serie': data.get('doc_serie', ''),
+                        'doc_number': data.get('doc_number', ''),
+                        'contract_type_rom': ct.ContractTypeRom if ct else '',
+                        'test_period': data.get('test_period', 90),
+                        'start_work_date_str': start_work_date.strftime('%d.%m.%Y'),
+                        'end_work_date_str': end_work_date_contract.strftime('%d.%m.%Y') if end_work_date_contract else '',
+                        'hire_date_str': hire_date.strftime('%d.%m.%Y'),
+                        'function_description': func.FunctionDescription if func else '',
+                        'core_code': data.get('core_code', ''),
+                        'company_name': company.EmployeerName if company else '',
+                        'company_address': '',
+                        'company_city': '',
+                        'company_phone': '',
+                        'company_fiscal_code': company.FiscalCode if company else '',
+                        'company_reg_code': '',
+                        'contract_number': result['contract_number'],
+                    }
+
+                    docs = doc_gen.generate_all(hiring_data)
+                    doc_success = sum(1 for d in docs if d['success'])
+                    doc_fail = sum(1 for d in docs if not d['success'])
+
+                    if doc_fail > 0:
+                        flash(_('%(fail)s documenti non generati (template mancanti?). %(ok)s generati OK.',
+                                fail=doc_fail, ok=doc_success), 'warning')
+                    elif doc_success > 0:
+                        flash(_('%(count)s documenti generati correttamente.', count=doc_success), 'info')
+
+                except Exception as doc_err:
+                    flash(_('Errore generazione documenti: %(err)s', err=str(doc_err)), 'warning')
+
                 flash(
-                    _('Assunzione completata! Contratto: %(contract)s. Utente: %(user)s',
-                      contract=result['contract_number'], user=user.Username),
+                    _('Assunzione completata! Contratto: %(contract)s. Utente: %(user)s (pwd: %(pwd)s)',
+                      contract=result['contract_number'], user=user.Username, pwd=password),
                     'success'
                 )
                 return redirect(url_for('employees.detail', id=result['employee_id']))
@@ -441,3 +513,51 @@ def api_validate_cnp():
 
     return jsonify(result)
 
+
+# ==================== DOCUMENT DOWNLOAD ====================
+
+@employees_bp.route('/documents/<int:employee_id>/')
+@login_required
+def documents_list(employee_id):
+    """List generated documents for an employee."""
+    import os
+    from app.models.settings import AppSetting
+
+    employee = db.session.query(Employee).get_or_404(employee_id)
+    output_path = AppSetting.get_value('DOCUMENT_OUTPUT_PATH', r'L:\\Employees\\Documenti\\')
+
+    docs = []
+    for year_dir in sorted(os.listdir(output_path), reverse=True) if os.path.exists(output_path) else []:
+        emp_dir = os.path.join(output_path, year_dir, str(employee_id))
+        if os.path.isdir(emp_dir):
+            for f in sorted(os.listdir(emp_dir)):
+                if f.endswith('.docx'):
+                    filepath = os.path.join(emp_dir, f)
+                    docs.append({
+                        'name': f,
+                        'year': year_dir,
+                        'size': os.path.getsize(filepath),
+                        'modified': os.path.getmtime(filepath),
+                    })
+
+    return render_template('employees/documents.html', employee=employee, docs=docs)
+
+
+@employees_bp.route('/documents/<int:employee_id>/download/<path:filename>')
+@login_required
+def document_download(employee_id, filename):
+    """Download a specific document."""
+    import os
+    from flask import send_file
+    from app.models.settings import AppSetting
+
+    output_path = AppSetting.get_value('DOCUMENT_OUTPUT_PATH', r'L:\\Employees\\Documenti\\')
+
+    # Search in all year directories
+    for year_dir in os.listdir(output_path) if os.path.exists(output_path) else []:
+        filepath = os.path.join(output_path, year_dir, str(employee_id), filename)
+        if os.path.isfile(filepath):
+            return send_file(filepath, as_attachment=True, download_name=filename)
+
+    flash(_('Documento non trovato.'), 'danger')
+    return redirect(url_for('employees.detail', id=employee_id))
