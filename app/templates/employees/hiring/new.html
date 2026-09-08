@@ -1,0 +1,553 @@
+{% extends 'base.html' %}
+{% set active_page = 'hiring' %}
+
+{% block title %}{{ _('Nuova Assunzione') }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">{{ _('Dipendenti') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('employees.hiring_index') }}">{{ _('Assunzione') }}</a></li>
+<li class="breadcrumb-item active">{{ _('Nuova') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-person-plus me-2"></i>{{ _('Nuova Assunzione') }}</h2>
+</div>
+
+<form method="POST" action="{{ url_for('employees.hiring_new') }}" id="hiringForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs mb-3" id="hiringTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-personal" data-bs-toggle="tab" data-bs-target="#pane-personal" type="button" role="tab">
+                <i class="bi bi-person me-1"></i> {{ _('Dati Personali') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-documents" data-bs-toggle="tab" data-bs-target="#pane-documents" type="button" role="tab">
+                <i class="bi bi-card-heading me-1"></i> {{ _('Documenti') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-address" data-bs-toggle="tab" data-bs-target="#pane-address" type="button" role="tab">
+                <i class="bi bi-house me-1"></i> {{ _('Residenza') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-family" data-bs-toggle="tab" data-bs-target="#pane-family" type="button" role="tab">
+                <i class="bi bi-people me-1"></i> {{ _('Familiari') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-contract" data-bs-toggle="tab" data-bs-target="#pane-contract" type="button" role="tab">
+                <i class="bi bi-file-earmark-text me-1"></i> {{ _('Contratto') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-medical" data-bs-toggle="tab" data-bs-target="#pane-medical" type="button" role="tab">
+                <i class="bi bi-heart-pulse me-1"></i> {{ _('Visita Medica') }}
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="hiringTabContent">
+
+        <!-- ============ TAB 1: DATI PERSONALI ============ -->
+        <div class="tab-pane fade show active" id="pane-personal" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- CNP with live validation -->
+                        <div class="col-md-4">
+                            <label for="cnp" class="form-label fw-bold">{{ _('Codice Numerico Personale (CNP)') }} *</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="cnp" name="cnp" maxlength="13" pattern="\d{13}" required placeholder="1234567890123">
+                                <button type="button" class="btn btn-outline-primary" id="btnValidateCnp" title="{{ _('Verifica CNP') }}">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                            </div>
+                            <div id="cnpResult" class="mt-1"></div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="surname" class="form-label fw-bold">{{ _('Cognome') }} *</label>
+                            <input type="text" class="form-control" id="surname" name="surname" required maxlength="50">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="name" class="form-label fw-bold">{{ _('Nome di battesimo') }} *</label>
+                            <input type="text" class="form-control" id="name" name="name" required maxlength="50">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="middle_name" class="form-label">{{ _('Secondo nome') }}</label>
+                            <input type="text" class="form-control" id="middle_name" name="middle_name" maxlength="50">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sex" class="form-label fw-bold">{{ _('Sesso') }} *</label>
+                            <select class="form-select" id="sex" name="sex" required>
+                                <option value="M">{{ _('Maschile') }}</option>
+                                <option value="F">{{ _('Femminile') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Data di nascita') }}</label>
+                            <input type="date" class="form-control" id="birth_date_display" disabled>
+                            <small class="text-muted">{{ _('Auto-rilevata dal CNP') }}</small>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="birth_county" class="form-label">{{ _('Contea di nascita') }}</label>
+                            <select class="form-select" id="birth_county" onchange="loadTowns(this.value, 'birth_town_id')">
+                                <option value="">-- {{ _('Seleziona contea') }} --</option>
+                                {% for c in counties %}
+                                <option value="{{ c.CountyId }}">{{ c.CountyName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="birth_town_id" class="form-label">{{ _('Luogo di nascita') }}</label>
+                            <select class="form-select" id="birth_town_id" name="birth_town_id">
+                                <option value="">-- {{ _('Seleziona citta') }} --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- CNP Existing Employee Popup -->
+            <div class="modal fade" id="cnpExistingModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>{{ _('Dipendente gia presente') }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="cnpExistingBody"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Chiudi') }}</button>
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="btnContinueHiring">{{ _('Continua assunzione') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TAB 2: DOCUMENTI ============ -->
+        <div class="tab-pane fade" id="pane-documents" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">{{ _('Documento di riconoscimento') }}</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="doc_type_id" class="form-label fw-bold">{{ _('Tipo documento') }} *</label>
+                            <select class="form-select" id="doc_type_id" name="doc_type_id" required>
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                {% for dt in doc_types %}
+                                <option value="{{ dt.DocumentTypeId }}">{{ dt.DocNameRo or dt.DocumentName }} ({{ dt.Acronim }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="doc_serie" class="form-label fw-bold">{{ _('Serie') }} *</label>
+                            <input type="text" class="form-control" id="doc_serie" name="doc_serie" maxlength="5" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="doc_number" class="form-label fw-bold">{{ _('Numero') }} *</label>
+                            <input type="text" class="form-control" id="doc_number" name="doc_number" maxlength="15" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="doc_issued_by" class="form-label fw-bold">{{ _('Ente emittente') }} *</label>
+                            <input type="text" class="form-control" id="doc_issued_by" name="doc_issued_by" maxlength="50" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="doc_issue_date" class="form-label fw-bold">{{ _('Data emissione') }} *</label>
+                            <input type="date" class="form-control" id="doc_issue_date" name="doc_issue_date" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="doc_expire_date" class="form-label fw-bold">{{ _('Data scadenza') }} *</label>
+                            <input type="date" class="form-control" id="doc_expire_date" name="doc_expire_date" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TAB 3: RESIDENZA / CONTATTI ============ -->
+        <div class="tab-pane fade" id="pane-address" role="tabpanel">
+            <div class="card mb-3">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-house me-1"></i> {{ _('Residenza ufficiale') }}</h6></div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Contea') }}</label>
+                            <select class="form-select" id="addr_county" onchange="loadTowns(this.value, 'addr_town_id')">
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                {% for c in counties %}<option value="{{ c.CountyId }}">{{ c.CountyName }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Citta') }}</label>
+                            <select class="form-select" id="addr_town_id" name="addr_town_id">
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Via') }}</label>
+                            <input type="text" class="form-control" name="addr_street" maxlength="50">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ _('N. Civico') }}</label>
+                            <input type="text" class="form-control" name="addr_numero" maxlength="10">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ _('Blocco') }}</label>
+                            <input type="text" class="form-control" name="addr_bloc" maxlength="50">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ _('Scala') }}</label>
+                            <input type="text" class="form-control" name="addr_scala" maxlength="10">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ _('Piano') }}</label>
+                            <input type="text" class="form-control" name="addr_piano" maxlength="5">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ _('Appartamento') }}</label>
+                            <input type="text" class="form-control" name="addr_apartment" maxlength="10">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-telephone me-1"></i> {{ _('Contatti') }}</h6></div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">{{ _('Telefono') }} *</label>
+                            <input type="tel" class="form-control" name="phone" maxlength="50" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Telefono 2') }}</label>
+                            <input type="tel" class="form-control" name="phone2" maxlength="50">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">{{ _('Email personale') }} *</label>
+                            <input type="email" class="form-control" name="email" maxlength="100" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Email di servizio') }}</label>
+                            <input type="email" class="form-control" name="work_email" maxlength="150" placeholder="nome.cognome@{{ _('dominio') }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TAB 4: FAMILIARI ============ -->
+        <div class="tab-pane fade" id="pane-family" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-people me-1"></i> {{ _('Familiari e persone a carico') }}</h6>
+                    <button type="button" class="btn btn-sm btn-primary" id="btnAddChild">
+                        <i class="bi bi-plus-circle me-1"></i> {{ _('Aggiungi') }}
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="childrenContainer">
+                        <!-- Dynamic rows added by JS -->
+                    </div>
+                    <p class="text-muted small mt-2" id="noChildrenMsg">{{ _('Nessun familiare aggiunto. Clicca "Aggiungi" per inserire.') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TAB 5: CONTRATTO ============ -->
+        <div class="tab-pane fade" id="pane-contract" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{{ _('Societa') }} *</label>
+                            <select class="form-select" name="employeer_id" required>
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                {% for c in companies %}
+                                <option value="{{ c.EmployeerId }}">{{ c.EmployeerName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{{ _('Tipo contratto') }} *</label>
+                            <select class="form-select" name="contract_type_id" required>
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                {% for ct in contract_types %}
+                                <option value="{{ ct.ContractTypeId }}" data-hours="{{ ct.NoHours }}">
+                                    {{ ct.ContractTypeRom or ct.ContractType }} ({{ ct.NoHours }}h{% if ct.Partial %} - Parziale{% endif %})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{{ _('Tipo registro') }} *</label>
+                            <select class="form-select" name="registry_type_id" required>
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                {% for rt in registry_types %}
+                                <option value="{{ rt.RegisterTypeId }}">{{ rt.Acronim }} - {{ rt.Description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">{{ _('Data stipula contratto') }} *</label>
+                            <input type="date" class="form-control" name="hire_date" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">{{ _('Data inizio lavoro') }} *</label>
+                            <input type="date" class="form-control" name="start_work_date" required>
+                            <small class="text-muted">{{ _('Minimo il giorno dopo la stipula') }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Data fine contratto') }}</label>
+                            <input type="date" class="form-control" name="end_work_date_contract">
+                            <small class="text-muted">{{ _('Solo per contratti a termine') }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Ore/giorno') }}</label>
+                            <input type="number" class="form-control" name="hours_per_day" min="1" max="12" value="8">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">{{ _('Centro di costo') }} *</label>
+                            <select class="form-select" id="cdc_id" onchange="loadSubCdcs(this.value)" required>
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                {% for cc in cost_centers %}
+                                <option value="{{ cc.CdcId }}">{{ cc.Cdc }} - {{ cc.CdcDescription }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">{{ _('Sotto-centro di costo') }} *</label>
+                            <select class="form-select" id="sub_cdc_id" name="sub_cdc_id" required>
+                                <option value="">-- {{ _('Prima seleziona CdC') }} --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">{{ _('Funzione') }} *</label>
+                            <select class="form-select" name="function_id" id="function_id" required>
+                                <option value="">-- {{ _('Caricamento...') }} --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Codice COR') }}</label>
+                            <select class="form-select" name="core_code">
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                {% for cc in code_cores %}
+                                <option value="{{ cc.CoreCode }}">{{ cc.CoreCode }} - {{ cc.CoreDescription[:50] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">{{ _('Salario lordo (RON)') }} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="salary" min="0" required>
+                                <span class="input-group-text">RON</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Periodo di prova (giorni)') }}</label>
+                            <input type="number" class="form-control" name="test_period" min="0" max="180" value="90">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TAB 6: VISITA MEDICA ============ -->
+        <div class="tab-pane fade" id="pane-medical" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">{{ _('Programmazione visita medica') }}</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Centro medico') }}</label>
+                            <select class="form-select" name="medical_center_id">
+                                <option value="">-- {{ _('Seleziona') }} --</option>
+                                {% for mc in medical_centers %}
+                                <option value="{{ mc.MedicalCenterId }}">{{ mc.CenterName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Data visita') }}</label>
+                            <input type="date" class="form-control" name="medical_visit_date">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ _('Guida mezzi aziendali') }}</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" name="can_drive" id="can_drive">
+                                <label class="form-check-label" for="can_drive">{{ _('Si') }}</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Bar -->
+    <div class="card mt-3 border-primary">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('employees.hiring_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> {{ _('Annulla') }}
+            </a>
+            <div>
+                <button type="submit" class="btn btn-lg btn-primary">
+                    <i class="bi bi-check-circle me-1"></i> {{ _('Registra Assunzione') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ==================== CNP VALIDATION ====================
+document.getElementById('btnValidateCnp').addEventListener('click', validateCnp);
+document.getElementById('cnp').addEventListener('blur', function() {
+    if (this.value.length === 13) validateCnp();
+});
+
+function validateCnp() {
+    const cnp = document.getElementById('cnp').value.trim();
+    const resultDiv = document.getElementById('cnpResult');
+    if (cnp.length !== 13) {
+        resultDiv.innerHTML = '<small class="text-danger">CNP deve avere 13 cifre</small>';
+        return;
+    }
+
+    fetch(`{{ url_for('employees.api_validate_cnp') }}?cnp=${cnp}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.valid) {
+                resultDiv.innerHTML = `<small class="text-danger"><i class="bi bi-x-circle"></i> ${data.error}</small>`;
+                return;
+            }
+
+            resultDiv.innerHTML = `<small class="text-success"><i class="bi bi-check-circle"></i> CNP valido - ${data.sex === 'M' ? 'Maschile' : 'Femminile'} - ${data.county_name}</small>`;
+
+            // Auto-fill sex and birth date
+            document.getElementById('sex').value = data.sex || 'M';
+            if (data.birth_date) {
+                document.getElementById('birth_date_display').value = data.birth_date;
+            }
+
+            // Check if existing employee
+            if (data.existing) {
+                let html = `<p class="fw-bold">${data.employee_name} (ID: ${data.employee_id})</p>`;
+                html += '<h6>Storico contratti:</h6><table class="table table-sm table-striped"><thead><tr><th>Societa</th><th>Assunzione</th><th>Fine</th></tr></thead><tbody>';
+                data.contracts.forEach(c => {
+                    html += `<tr><td>${c.company}</td><td>${c.hire_date}</td><td>${c.end_date}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                if (data.disciplinary_count > 0) {
+                    html += `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> <strong>${data.disciplinary_count} note disciplinari</strong> registrate.</div>`;
+                }
+                document.getElementById('cnpExistingBody').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('cnpExistingModal')).show();
+            }
+        })
+        .catch(err => {
+            resultDiv.innerHTML = `<small class="text-danger">Errore: ${err}</small>`;
+        });
+}
+
+// ==================== CASCADING DROPDOWNS ====================
+function loadSubCdcs(cdcId) {
+    const sel = document.getElementById('sub_cdc_id');
+    sel.innerHTML = '<option value="">-- Caricamento... --</option>';
+    if (!cdcId) return;
+
+    fetch(`{{ url_for('employees.index') }}api/subcdc/${cdcId}`)
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '<option value="">-- Seleziona --</option>';
+            data.forEach(s => {
+                sel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+            });
+        });
+}
+
+function loadTowns(countyId, targetId) {
+    const sel = document.getElementById(targetId);
+    sel.innerHTML = '<option value="">-- Caricamento... --</option>';
+    if (!countyId) return;
+
+    fetch(`{{ url_for('employees.index') }}api/towns/${countyId}`)
+        .then(r => r.json())
+        .then(data => {
+            sel.innerHTML = '<option value="">-- Seleziona --</option>';
+            data.forEach(t => {
+                sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+            });
+        });
+}
+
+// Load functions on page load
+fetch(`{{ url_for('employees.index') }}api/functions`)
+    .then(r => r.json())
+    .then(data => {
+        const sel = document.getElementById('function_id');
+        sel.innerHTML = '<option value="">-- Seleziona --</option>';
+        data.forEach(f => {
+            sel.innerHTML += `<option value="${f.id}">${f.name} (${f.code})</option>`;
+        });
+    });
+
+// ==================== CHILDREN DYNAMIC ROWS ====================
+let childCount = 0;
+document.getElementById('btnAddChild').addEventListener('click', () => {
+    childCount++;
+    document.getElementById('noChildrenMsg').style.display = 'none';
+    const container = document.getElementById('childrenContainer');
+    const row = document.createElement('div');
+    row.className = 'row g-2 mb-2 align-items-end child-row';
+    row.innerHTML = `
+        <div class="col-md-3">
+            <label class="form-label small">Nome completo</label>
+            <input type="text" class="form-control form-control-sm" name="child_name[]" maxlength="100">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Data nascita</label>
+            <input type="date" class="form-control form-control-sm" name="child_birthdate[]">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">CNP</label>
+            <input type="text" class="form-control form-control-sm" name="child_cnp[]" maxlength="16">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Grado parentela</label>
+            <select class="form-select form-select-sm" name="child_relative_type[]">
+                <option value="">--</option>
+                {% for rt in relative_types %}
+                <option value="{{ rt.FamilyRelativeId }}">{{ rt.RelationType }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.child-row').remove(); checkChildrenEmpty();">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(row);
+});
+
+function checkChildrenEmpty() {
+    const rows = document.querySelectorAll('.child-row');
+    document.getElementById('noChildrenMsg').style.display = rows.length === 0 ? '' : 'none';
+}
+</script>
+{% endblock %}
