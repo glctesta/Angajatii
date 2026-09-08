@@ -16,18 +16,13 @@
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
-                    {% if employee.EmployeeSex == 'M' %}
-                    <i class="bi bi-person me-2"></i>
-                    {% else %}
-                    <i class="bi bi-person me-2"></i>
-                    {% endif %}
-                    {{ employee.full_name }}
+                    <i class="bi bi-person-badge me-2"></i>{{ employee.full_name }}
                 </h5>
             </div>
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
                     <tr>
-                        <th class="text-muted" style="width: 40%;">ID</th>
+                        <th class="text-muted" style="width: 45%;">ID</th>
                         <td>{{ employee.EmployeeId }}</td>
                     </tr>
                     <tr>
@@ -59,15 +54,13 @@
                             <i class="bi bi-gender-male text-primary"></i> {{ _('Maschio') }}
                             {% elif employee.EmployeeSex == 'F' %}
                             <i class="bi bi-gender-female text-danger"></i> {{ _('Femmina') }}
-                            {% else %}
-                            -
-                            {% endif %}
+                            {% else %}-{% endif %}
                         </td>
                     </tr>
                     <tr>
                         <th class="text-muted">{{ _('Stato') }}</th>
                         <td>
-                            {% if active_contract %}
+                            {% if active_contracts %}
                             <span class="badge bg-success">{{ _('Attivo') }}</span>
                             {% else %}
                             <span class="badge bg-secondary">{{ _('Non attivo') }}</span>
@@ -77,6 +70,48 @@
                 </table>
             </div>
         </div>
+
+        <!-- Active Contracts Summary -->
+        {% if active_contracts %}
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="bi bi-building me-2"></i>{{ _('Contratti Attivi') }}</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for c, emp in contracts if c.EndWorkDate is none %}
+                <div class="list-group-item">
+                    <div class="fw-semibold">{{ emp.EmployeerName }}</div>
+                    <small class="text-muted">
+                        {{ _('Dal') }} {{ c.StartWorkDate.strftime('%d/%m/%Y') if c.StartWorkDate else c.HireDate.strftime('%d/%m/%Y') }}
+                        &middot; {{ c.HourPerDay or 8 }}h/{{ _('giorno') }}
+                        {% if c.NoWorkContract %} &middot; {{ c.NoWorkContract }}{% endif %}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Current CdC -->
+        {% if cdc_stories %}
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>{{ _('Reparto Attuale') }}</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for story, cdc, func in cdc_stories %}
+                <div class="list-group-item">
+                    <div class="fw-semibold">{{ cdc.SubCdcDescription or cdc.SubCdc }}</div>
+                    {% if func %}
+                    <small class="text-muted">{{ func.FunctionDescription or func.FunctionCode }}</small>
+                    {% endif %}
+                    <br>
+                    <small class="text-muted">{{ _('Dal') }} {{ story.DateIn.strftime('%d/%m/%Y') if story.DateIn else '-' }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Right: Contract History -->
@@ -89,20 +124,22 @@
                 <table class="table table-hover table-sm mb-0">
                     <thead class="table-light">
                         <tr>
+                            <th>{{ _('Societa') }}</th>
                             <th>{{ _('Data Assunzione') }}</th>
                             <th>{{ _('Inizio Lavoro') }}</th>
                             <th>{{ _('Fine Lavoro') }}</th>
-                            <th>{{ _('Ore/giorno') }}</th>
+                            <th>{{ _('Ore/g') }}</th>
                             <th>{{ _('N. Contratto') }}</th>
                             <th class="text-center">{{ _('Stato') }}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for c in contracts %}
+                        {% for c, emp in contracts %}
                         <tr {% if c.EndWorkDate is none %}class="table-success"{% endif %}>
-                            <td>{{ c.HireDate.strftime('%d/%m/%Y') if c.HireDate else '-' }}</td>
-                            <td>{{ c.StartWorkDate.strftime('%d/%m/%Y') if c.StartWorkDate else '-' }}</td>
-                            <td>{{ c.EndWorkDate.strftime('%d/%m/%Y') if c.EndWorkDate else '-' }}</td>
+                            <td class="fw-semibold small">{{ emp.EmployeerName }}</td>
+                            <td class="small">{{ c.HireDate.strftime('%d/%m/%Y') if c.HireDate else '-' }}</td>
+                            <td class="small">{{ c.StartWorkDate.strftime('%d/%m/%Y') if c.StartWorkDate else '-' }}</td>
+                            <td class="small">{{ c.EndWorkDate.strftime('%d/%m/%Y') if c.EndWorkDate else '-' }}</td>
                             <td>{{ c.HourPerDay or '-' }}</td>
                             <td><small>{{ c.NoWorkContract or '-' }}</small></td>
                             <td class="text-center">
@@ -115,7 +152,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-3">{{ _('Nessun contratto trovato') }}</td>
+                            <td colspan="7" class="text-center text-muted py-3">{{ _('Nessun contratto trovato') }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
