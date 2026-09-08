@@ -24,30 +24,87 @@
 
     <div class="sidebar-menu p-3">
         <ul class="nav flex-column">
+            <!-- Dashboard -->
             <li class="nav-item" data-menu-id="dashboard" data-menu-label="{{ _('Dashboard') }}" data-menu-icon="bi-speedometer2">
                 <a class="nav-link text-white {% if active_page == 'dashboard' %}active bg-primary rounded{% endif %}" href="{{ url_for('dashboard.index') }}">
                     <i class="bi bi-speedometer2 me-2"></i> <span>{{ _('Dashboard') }}</span>
                     <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
-            <li class="nav-item" data-menu-id="employees" data-menu-label="{{ _('Dipendenti') }}" data-menu-icon="bi-people">
-                <a class="nav-link text-white {% if active_page == 'employees' %}active bg-primary rounded{% endif %}" href="{{ url_for('employees.index') }}">
-                    <i class="bi bi-people me-2"></i> <span>{{ _('Dipendenti') }}</span>
-                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
+
+            <!-- ====== DIPENDENTI (expandable) ====== -->
+            <li class="nav-item">
+                <a class="nav-link text-white d-flex align-items-center sidebar-toggle-menu" href="#menuDipendenti" data-bs-toggle="collapse" role="button" aria-expanded="{{ 'true' if active_page in ['employees', 'hiring', 'salary_change', 'disciplinary'] else 'false' }}">
+                    <i class="bi bi-people me-2"></i>
+                    <span>{{ _('Dipendenti') }}</span>
+                    <i class="bi bi-chevron-down ms-auto sidebar-chevron" style="font-size:0.7rem;"></i>
                 </a>
+                <div class="collapse {% if active_page in ['employees', 'hiring', 'salary_change', 'disciplinary'] %}show{% endif %}" id="menuDipendenti">
+                    <ul class="nav flex-column ms-3 border-start border-secondary ps-2">
+                        <!-- Anagrafica -->
+                        <li class="nav-item" data-menu-id="employees" data-menu-label="{{ _('Anagrafica') }}" data-menu-icon="bi-person-lines-fill">
+                            <a class="nav-link text-white py-1 {% if active_page == 'employees' %}active bg-primary rounded{% endif %}" href="{{ url_for('employees.index') }}">
+                                <i class="bi bi-person-lines-fill me-2"></i> <span>{{ _('Anagrafica') }}</span>
+                                <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
+                            </a>
+                        </li>
+                        <!-- Gestione (sub-group) -->
+                        <li class="nav-item mt-1">
+                            <a class="nav-link text-white d-flex align-items-center py-1 sidebar-toggle-menu" href="#menuGestione" data-bs-toggle="collapse" role="button" aria-expanded="{{ 'true' if active_page in ['hiring', 'salary_change', 'disciplinary'] else 'false' }}">
+                                <i class="bi bi-gear-wide-connected me-2"></i>
+                                <span>{{ _('Gestione') }}</span>
+                                <i class="bi bi-chevron-down ms-auto sidebar-chevron" style="font-size:0.65rem;"></i>
+                            </a>
+                            <div class="collapse {% if active_page in ['hiring', 'salary_change', 'disciplinary'] %}show{% endif %}" id="menuGestione">
+                                <ul class="nav flex-column ms-3 border-start border-secondary ps-2">
+                                    <li class="nav-item" data-menu-id="hiring" data-menu-label="{{ _('Assunzione') }}" data-menu-icon="bi-person-plus">
+                                        <a class="nav-link text-white py-1 {% if active_page == 'hiring' %}active bg-primary rounded{% endif %}" href="{{ url_for('employees.hiring_index') }}">
+                                            <i class="bi bi-person-plus me-2"></i> <span>{{ _('Assunzione') }}</span>
+                                            <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item" data-menu-id="salary_change" data-menu-label="{{ _('Modifica salariale') }}" data-menu-icon="bi-cash-coin">
+                                        <a class="nav-link text-white py-1 disabled" href="#">
+                                            <i class="bi bi-cash-coin me-2"></i> <span>{{ _('Modifica salariale') }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item" data-menu-id="role_change" data-menu-label="{{ _('Modifica ruolo/sede') }}" data-menu-icon="bi-arrow-repeat">
+                                        <a class="nav-link text-white py-1 disabled" href="#">
+                                            <i class="bi bi-arrow-repeat me-2"></i> <span>{{ _('Modifica ruolo/sede') }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item" data-menu-id="disciplinary" data-menu-label="{{ _('Note disciplinari') }}" data-menu-icon="bi-exclamation-triangle">
+                                        <a class="nav-link text-white py-1 disabled" href="#">
+                                            <i class="bi bi-exclamation-triangle me-2"></i> <span>{{ _('Note disciplinari') }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item" data-menu-id="anag_changes" data-menu-label="{{ _('Modifiche anagrafiche') }}" data-menu-icon="bi-pencil-square">
+                                        <a class="nav-link text-white py-1 disabled" href="#">
+                                            <i class="bi bi-pencil-square me-2"></i> <span>{{ _('Modifiche anagrafiche') }}</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </li>
+
+            <!-- Contratti -->
             <li class="nav-item" data-menu-id="contracts" data-menu-label="{{ _('Contratti') }}" data-menu-icon="bi-file-earmark-text">
                 <a class="nav-link text-white {% if active_page == 'contracts' %}active bg-primary rounded{% endif %}" href="#">
                     <i class="bi bi-file-earmark-text me-2"></i> <span>{{ _('Contratti') }}</span>
                     <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
+            <!-- Organizzazione -->
             <li class="nav-item" data-menu-id="organization" data-menu-label="{{ _('Organizzazione') }}" data-menu-icon="bi-diagram-3">
                 <a class="nav-link text-white {% if active_page == 'organization' %}active bg-primary rounded{% endif %}" href="#">
                     <i class="bi bi-diagram-3 me-2"></i> <span>{{ _('Organizzazione') }}</span>
                     <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>
+            <!-- Fabbisogno -->
             <li class="nav-item" data-menu-id="needs" data-menu-label="{{ _('Fabbisogno') }}" data-menu-icon="bi-graph-up-arrow">
                 <a class="nav-link text-white {% if active_page == 'needs' %}active bg-primary rounded{% endif %}" href="{{ url_for('needs.index') }}">
                     <i class="bi bi-graph-up-arrow me-2"></i> <span>{{ _('Fabbisogno') }}</span>
@@ -55,6 +112,7 @@
                 </a>
             </li>
 
+            <!-- ====== AMMINISTRAZIONE ====== -->
             {% if current_user.is_authenticated and (current_user.IsSuperAdmin or current_user.has_role('admin')) %}
             <li class="nav-item mt-4">
                 <h6 class="sidebar-heading px-3 text-secondary text-uppercase" style="font-size: 0.8rem;">{{ _('Amministrazione') }}</h6>
@@ -74,6 +132,12 @@
             <li class="nav-item" data-menu-id="admin_import" data-menu-label="{{ _('Importazione') }}" data-menu-icon="bi-cloud-arrow-down">
                 <a class="nav-link text-white {% if active_page == 'admin_import' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.import_page') }}">
                     <i class="bi bi-cloud-arrow-down me-2"></i> <span>{{ _('Importazione') }}</span>
+                    <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
+                </a>
+            </li>
+            <li class="nav-item" data-menu-id="admin_registry_types" data-menu-label="{{ _('Tipi Registro') }}" data-menu-icon="bi-tags">
+                <a class="nav-link text-white {% if active_page == 'admin_registry_types' %}active bg-primary rounded{% endif %}" href="{{ url_for('admin.registry_types') }}">
+                    <i class="bi bi-tags me-2"></i> <span>{{ _('Tipi Registro') }}</span>
                     <i class="bi bi-star fav-star ms-auto" title="{{ _('Aggiungi ai preferiti') }}"></i>
                 </a>
             </li>

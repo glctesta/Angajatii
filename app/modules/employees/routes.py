@@ -182,3 +182,78 @@ def edit(id):
         return redirect(url_for('employees.detail', id=id))
 
     return render_template('employees/edit.html', employee=employee)
+
+
+# ==================== HIRING ====================
+
+@employees_bp.route('/hiring/')
+@login_required
+def hiring_index():
+    """Hiring dashboard - list of pending/recent hirings."""
+    # Get approved resource requests that are not yet fulfilled
+    from app.models import ResourceRequest, CdcSub, Function
+    pending_requests = db.session.query(
+        ResourceRequest, CdcSub, Function
+    ).join(
+        CdcSub, ResourceRequest.SubCdcId == CdcSub.SubCdcId
+    ).join(
+        Function, ResourceRequest.FunctionId == Function.FunctionId
+    ).filter(
+        ResourceRequest.Status.in_(['approved', 'pending'])
+    ).order_by(ResourceRequest.RequestedAt.desc()).all()
+
+    return render_template(
+        'employees/hiring/index.html',
+        pending_requests=pending_requests,
+    )
+
+
+# ==================== CNP VALIDATION API ====================
+
+@employees_bp.route('/api/cnp/validate')
+@login_required
+def api_validate_cnp():
+    """HTMX endpoint for CNP validation with existing employee check."""
+    from flask import jsonify
+    from app.services.cnp_validator import validate_cnp
+    from app.models import EmployeeDisciplinaryHistory
+
+    cnp = request.args.get('cnp', '').strip()
+    if not cnp:
+        return jsonify({'valid': False, 'error': 'CNP richiesto'})
+
+    result = validate_cnp(cnp)
+
+    # Check if employee already exists
+    if result['valid']:
+        existing = db.session.query(Employee).filter_by(EmployeeNID=cnp).first()
+        if existing:
+            result['existing'] = True
+            result['employee_id'] = existing.EmployeeId
+            result['employee_name'] = existing.full_name
+
+            # Get hire history
+            contracts = db.session.query(EmployeeHireHistory, Employeer).join(
+                Employeer, EmployeeHireHistory.EmployeerId == Employeer.EmployeerId
+            ).filter(
+                EmployeeHireHistory.EmployeeId == existing.EmployeeId
+            ).order_by(EmployeeHireHistory.HireDate.desc()).all()
+
+            result['contracts'] = [{
+                'company': emp.EmployeerName,
+                'hire_date': c.HireDate.strftime('%d/%m/%Y') if c.HireDate else '-',
+                'end_date': c.EndWorkDate.strftime('%d/%m/%Y') if c.EndWorkDate else 'Attivo',
+            } for c, emp in contracts]
+
+            # Check disciplinary history
+            disc_count = db.session.query(EmployeeDisciplinaryHistory).join(
+                EmployeeHireHistory,
+                EmployeeDisciplinaryHistory.EmployeeHireHistoryId == EmployeeHireHistory.EmployeeHireHistoryId
+            ).filter(
+                EmployeeHireHistory.EmployeeId == existing.EmployeeId
+            ).count()
+            result['disciplinary_count'] = disc_count
+        else:
+            result['existing'] = False
+
+    return jsonify(result)

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% set active_page = 'hiring' %}
+
+{% block title %}{{ _('Assunzione Dipendenti') }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">{{ _('Dipendenti') }}</a></li>
+<li class="breadcrumb-item">{{ _('Gestione') }}</li>
+<li class="breadcrumb-item active">{{ _('Assunzione') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="bi bi-person-plus me-2"></i>{{ _('Assunzione Dipendenti') }}
+    </h2>
+    <a href="#" class="btn btn-primary">
+        <i class="bi bi-person-plus-fill me-1"></i>{{ _('Nuova Assunzione') }}
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">
+            <i class="bi bi-clipboard-check me-2"></i>{{ _('Richieste Risorse Approvate') }}
+        </h5>
+        {% if pending_requests is defined and pending_requests %}
+        <span class="badge bg-secondary">{{ pending_requests|length }}</span>
+        {% endif %}
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">{{ _('Reparto') }}</th>
+                        <th scope="col">{{ _('Funzione') }}</th>
+                        <th scope="col" class="text-center" style="width: 120px;">{{ _('Richiesti') }}</th>
+                        <th scope="col" class="text-center" style="width: 130px;">{{ _('Priorità') }}</th>
+                        <th scope="col" class="text-center" style="width: 130px;">{{ _('Stato') }}</th>
+                        <th scope="col" class="text-center" style="width: 150px;">{{ _('Data Richiesta') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req, sub_cdc, func in pending_requests %}
+                    <tr>
+                        <td>{{ sub_cdc.SubCdcDescription if sub_cdc else '-' }}</td>
+                        <td>{{ func.FunctionDescription if func else '-' }}</td>
+                        <td class="text-center fw-bold">{{ req.RequestedCount }}</td>
+                        <td class="text-center">
+                            {% if req.Priority == 'critical' %}
+                                <span class="badge bg-danger">{{ _('Critica') }}</span>
+                            {% elif req.Priority == 'high' %}
+                                <span class="badge bg-warning text-dark">{{ _('Alta') }}</span>
+                            {% elif req.Priority == 'normal' %}
+                                <span class="badge bg-info text-dark">{{ _('Normale') }}</span>
+                            {% elif req.Priority == 'low' %}
+                                <span class="badge bg-secondary">{{ _('Bassa') }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ req.Priority }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if req.Status == 'approved' %}
+                                <span class="badge bg-success">{{ _('Approvata') }}</span>
+                            {% elif req.Status == 'pending' %}
+                                <span class="badge bg-warning text-dark">{{ _('In attesa') }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ req.Status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {{ req.RequestedAt.strftime('%d/%m/%Y') if req.RequestedAt else '-' }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            {{ _('Nessuna richiesta di risorse approvata trovata.') }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -159,4 +159,16 @@ def seed_database():
 
     db.session.commit()
     print("[Seed] OK - Licenza default inserita (Basic, scadenza 2030-12-31).")
+
+    # 7. Seed AppSettings
+    from app.models.settings import AppSetting, DEFAULT_SETTINGS
+    for s_data in DEFAULT_SETTINGS:
+        existing = db.session.query(AppSetting).filter_by(SettingKey=s_data['SettingKey']).first()
+        if not existing:
+            setting = AppSetting(**s_data)
+            db.session.add(setting)
+    db.session.commit()
+    print("[Seed] OK - Impostazioni di sistema inserite.")
+
     print("[Seed] === Seeding completato ===")
+

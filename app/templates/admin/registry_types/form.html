@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% set active_page = 'admin_registry_types' %}
+
+{% block title %}{{ _('Nuovo Tipo Registro') if rt is none else _('Modifica Tipo Registro') }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">{{ _('Amministrazione') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.registry_types') }}">{{ _('Tipi Registro') }}</a></li>
+<li class="breadcrumb-item active">{{ _('Nuovo') if rt is none else _('Modifica') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-tags me-2"></i>{{ _('Nuovo Tipo Registro') if rt is none else _('Modifica Tipo Registro') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.registry_type_create') if rt is none else url_for('admin.registry_type_edit', id=rt.RegisterTypeId) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label for="Acronim" class="form-label fw-semibold">{{ _('Acronimo') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="Acronim" name="Acronim" maxlength="5" value="{{ rt.Acronim if rt and rt.Acronim is not none else '' }}" required>
+                        <div class="form-text">{{ _('Massimo 5 caratteri.') }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Description" class="form-label fw-semibold">{{ _('Descrizione') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="Description" name="Description" maxlength="200" value="{{ rt.Description if rt and rt.Description is not none else '' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="NoCopy" class="form-label fw-semibold">{{ _('Numero Copie') }}</label>
+                        <input type="number" class="form-control" id="NoCopy" name="NoCopy" min="0" value="{{ rt.NoCopy if rt and rt.NoCopy is not none else 1 }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="GenerateDocument" name="GenerateDocument" {% if rt and rt.GenerateDocument %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold" for="GenerateDocument">
+                                {{ _('Genera Documento') }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="PublicRequest" name="PublicRequest" {% if rt and rt.PublicRequest %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold" for="PublicRequest">
+                                {{ _('Richiesta Pubblica') }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="CdcMainId" class="form-label fw-semibold">{{ _('Centro di Costo Principale (CdcMainId)') }}</label>
+                        <input type="number" class="form-control" id="CdcMainId" name="CdcMainId" value="{{ rt.CdcMainId if rt and rt.CdcMainId is not none else '' }}" placeholder="{{ _('Opzionale') }}">
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('admin.registry_types') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i>{{ _('Annulla') }}
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>{{ _('Salva') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

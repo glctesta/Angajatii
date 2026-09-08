@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% set active_page = 'admin' %}
+
+{% block title %}{{ _('Impostazioni Sistema') }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">{{ _('Home') }}</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">{{ _('Amministrazione') }}</a></li>
+<li class="breadcrumb-item active">{{ _('Impostazioni') }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-gear-wide-connected me-2"></i>{{ _('Impostazioni Sistema') }}</h2>
+</div>
+
+<form method="POST" action="{{ url_for('admin.settings') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {% for category, settings in categories.items() %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0 fw-bold text-primary">
+                <i class="bi bi-folder2-open me-2"></i>{{ category|capitalize }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                {% for setting in settings %}
+                <div class="col-12">
+                    {% if setting.SettingType == 'bool' %}
+                    <div class="form-check form-switch pt-2">
+                        <input type="hidden" name="setting_{{ setting.SettingKey }}" id="hidden_{{ setting.SettingKey }}" value="false" {% if setting.SettingValue in ['true', 'True', '1', 1] %}disabled{% endif %}>
+                        <input class="form-check-input" type="checkbox" role="switch" id="setting_{{ setting.SettingKey }}" name="setting_{{ setting.SettingKey }}" value="true" {% if setting.SettingValue in ['true', 'True', '1', 1] %}checked{% endif %} onchange="document.getElementById('hidden_{{ setting.SettingKey }}').disabled = this.checked;">
+                        <label class="form-check-label fw-semibold" for="setting_{{ setting.SettingKey }}">
+                            {{ setting.Description or setting.SettingKey }}
+                        </label>
+                    </div>
+                    {% if setting.Description and setting.SettingKey != setting.Description %}
+                    <div class="form-text text-muted ms-4 ps-2">{{ setting.SettingKey }}</div>
+                    {% endif %}
+
+                    {% elif setting.SettingType == 'int' %}
+                    <label for="setting_{{ setting.SettingKey }}" class="form-label fw-semibold">
+                        {{ setting.Description or setting.SettingKey }}
+                    </label>
+                    <input type="number" class="form-control" id="setting_{{ setting.SettingKey }}" name="setting_{{ setting.SettingKey }}" value="{{ setting.SettingValue or '' }}">
+                    {% if setting.Description and setting.SettingKey != setting.Description %}
+                    <div class="form-text text-muted">{{ setting.SettingKey }}</div>
+                    {% endif %}
+
+                    {% elif setting.SettingType == 'path' %}
+                    <label for="setting_{{ setting.SettingKey }}" class="form-label fw-semibold">
+                        {{ setting.Description or setting.SettingKey }}
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-folder"></i></span>
+                        <input type="text" class="form-control font-monospace" id="setting_{{ setting.SettingKey }}" name="setting_{{ setting.SettingKey }}" value="{{ setting.SettingValue or '' }}">
+                    </div>
+                    {% if setting.Description and setting.SettingKey != setting.Description %}
+                    <div class="form-text text-muted">{{ setting.SettingKey }}</div>
+                    {% endif %}
+
+                    {% else %}
+                    <label for="setting_{{ setting.SettingKey }}" class="form-label fw-semibold">
+                        {{ setting.Description or setting.SettingKey }}
+                    </label>
+                    <input type="text" class="form-control" id="setting_{{ setting.SettingKey }}" name="setting_{{ setting.SettingKey }}" value="{{ setting.SettingValue or '' }}">
+                    {% if setting.Description and setting.SettingKey != setting.Description %}
+                    <div class="form-text text-muted">{{ setting.SettingKey }}</div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>{{ _('Nessuna impostazione trovata.') }}
+    </div>
+    {% endfor %}
+
+    <div class="d-flex justify-content-end mb-4">
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-check-lg me-1"></i>{{ _('Salva Impostazioni') }}
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            document.querySelectorAll('.form-switch input[type="checkbox"]').forEach(function(cb) {
+                var hidden = document.getElementById('hidden_' + cb.id.replace('setting_', ''));
+                if (hidden) {
+                    hidden.disabled = cb.checked;
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -19,8 +19,20 @@ from .attendance import Shift, ShiftTimeTable, Badge, EmployeeBadgeHistory
 # Address & Documents (schema: dbo)
 from .address import EmployeeAddress, RelativeType, EmployeeChild, DocumentType, EmployeeDocument
 
+# Registry (schema: dbo)
+from .registry import RegistryType, Registry
+
+# Medical (schema: dbo)
+from .medical import MedicalCenter, MedicalDoctor, MedicalVisitSchedule
+
+# Disciplinary (schema: dbo)
+from .disciplinary import EmployeeDisciplinaryHistory
+
 # Authentication & Authorization (schema: app)
 from .auth import User, Role, Permission, RolePermission, UserRole, UserCdcAccess, PasswordResetToken
+
+# Settings (schema: app)
+from .settings import AppSetting
 
 # Licensing (schema: app)
 from .license import License
@@ -49,9 +61,17 @@ __all__ = [
     'Shift', 'ShiftTimeTable', 'Badge', 'EmployeeBadgeHistory',
     # Address
     'EmployeeAddress', 'RelativeType', 'EmployeeChild', 'DocumentType', 'EmployeeDocument',
+    # Registry
+    'RegistryType', 'Registry',
+    # Medical
+    'MedicalCenter', 'MedicalDoctor', 'MedicalVisitSchedule',
+    # Disciplinary
+    'EmployeeDisciplinaryHistory',
     # Auth
     'User', 'Role', 'Permission', 'RolePermission', 'UserRole',
     'UserCdcAccess', 'PasswordResetToken',
+    # Settings
+    'AppSetting',
     # License
     'License',
     # Audit

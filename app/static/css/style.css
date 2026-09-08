@@ -194,6 +194,34 @@ body.sidebar-hidden .main-content {
     font-size: 0.95rem;
 }
 
+/* ==================== EXPANDABLE SUB-MENUS ==================== */
+.sidebar-toggle-menu {
+    cursor: pointer;
+}
+
+.sidebar-toggle-menu .sidebar-chevron {
+    transition: transform 0.2s ease;
+}
+
+.sidebar-toggle-menu[aria-expanded="true"] .sidebar-chevron {
+    transform: rotate(180deg);
+}
+
+.sidebar .collapse .nav-link,
+.sidebar .collapsing .nav-link {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.6rem;
+}
+
+.sidebar .nav-link.disabled {
+    color: rgba(255, 255, 255, 0.35) !important;
+    pointer-events: none;
+}
+
+.sidebar .collapse .border-start {
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
 /* ==================== CARDS ==================== */
 .card {
     border: none;
