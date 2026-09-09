@@ -1,8 +1,8 @@
 <nav id="sidebar" class="sidebar bg-dark text-white">
     <div class="sidebar-header d-flex align-items-center justify-content-between p-3 border-bottom border-secondary">
-        <div class="d-flex align-items-center sidebar-brand">
-            <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="{{ _('Logo') }}" class="logo-img" style="max-height: 36px;">
-            <span class="sidebar-title ms-2 fw-bold text-white">{{ _('Employees') }}</span>
+        <div class="sidebar-brand text-center w-100">
+            <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="{{ _('Logo') }}" class="logo-img" style="max-height: 42px;">
+            <div class="sidebar-title mt-1 fw-bold text-white" style="font-size: 0.8rem;">{{ _('Employees') }}</div>
         </div>
         <button id="sidebarPin" class="btn btn-sm btn-outline-light border-0 sidebar-pin-btn" title="{{ _('Fissa / Nascondi sidebar') }}">
             <i class="bi bi-pin-angle" id="pinIcon"></i>

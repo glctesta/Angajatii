@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const html = document.documentElement;
     
     const setTheme = (theme) => {
+        html.setAttribute('data-bs-theme', theme);
         html.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         if (themeIcon) {
