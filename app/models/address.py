@@ -63,9 +63,9 @@ class DocumentType(Base):
     __table_args__ = {'schema': 'dbo'}
 
     DocumentTypeId: Mapped[int] = mapped_column(Integer, primary_key=True)
-    DocumentName: Mapped[Optional[str]] = mapped_column(String(15))
+    DocumentName: Mapped[Optional[str]] = mapped_column(String(50))
     Acronim: Mapped[Optional[str]] = mapped_column(String(5))
-    DocNameRo: Mapped[Optional[str]] = mapped_column(String(30))
+    DocNameRo: Mapped[Optional[str]] = mapped_column(String(50))
     AcronimRo: Mapped[Optional[str]] = mapped_column(String(5))
     IsLegal: Mapped[Optional[bool]] = mapped_column(Boolean, default=False, server_default=text('0'))
     IsReadle: Mapped[Optional[bool]] = mapped_column(Boolean, default=False, server_default=text('0'))

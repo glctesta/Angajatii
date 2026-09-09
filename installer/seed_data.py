@@ -170,5 +170,25 @@ def seed_database():
     db.session.commit()
     print("[Seed] OK - Impostazioni di sistema inserite.")
 
-    print("[Seed] === Seeding completato ===")
+    # 8. Seed DocumentTypes
+    from app.models import DocumentType
+    doc_types = [
+        {'DocumentTypeId': 1, 'DocumentName': 'Identity Card', 'Acronim': 'CI',
+         'DocNameRo': 'Carte de identitate', 'AcronimRo': 'CI', 'IsLegal': True, 'IsReadle': True},
+        {'DocumentTypeId': 2, 'DocumentName': 'Passport', 'Acronim': 'PP',
+         'DocNameRo': 'Pasaport', 'AcronimRo': 'PP', 'IsLegal': True, 'IsReadle': False},
+        {'DocumentTypeId': 3, 'DocumentName': 'Driving License', 'Acronim': 'PC',
+         'DocNameRo': 'Permis de conducere', 'AcronimRo': 'PC', 'IsLegal': False, 'IsReadle': False},
+        {'DocumentTypeId': 4, 'DocumentName': 'Residence Permit', 'Acronim': 'PS',
+         'DocNameRo': 'Permis de sedere', 'AcronimRo': 'PS', 'IsLegal': True, 'IsReadle': True},
+        {'DocumentTypeId': 5, 'DocumentName': 'Temp Identity Card', 'Acronim': 'CIP',
+         'DocNameRo': 'Carte de identitate provizorie', 'AcronimRo': 'CIP', 'IsLegal': True, 'IsReadle': True},
+    ]
+    for d in doc_types:
+        existing = db.session.query(DocumentType).filter_by(DocumentTypeId=d['DocumentTypeId']).first()
+        if not existing:
+            db.session.add(DocumentType(**d))
+    db.session.commit()
+    print("[Seed] OK - Tipi documento inseriti.")
 
+    print("[Seed] === Seeding completato ===")
