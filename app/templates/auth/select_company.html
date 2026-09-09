@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Seleziona Societa') }} - {{ _('Employees Management') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+    <div class="container">
+        <div class="card p-4 shadow-lg border-0 rounded-4 mx-auto" style="max-width: 550px;">
+            <div class="text-center mb-4">
+                <img src="{{ url_for('static', filename='img/Logo.png') }}" alt="{{ _('Logo') }}" class="img-fluid mb-3" style="max-height: 80px;">
+                <h4 class="fw-bold">{{ _('Seleziona Societa') }}</h4>
+                <p class="text-muted">
+                    {{ _('Benvenuto') }}, <strong>{{ current_user.Username }}</strong>.
+                    {{ _('Con quale societa vuoi lavorare?') }}
+                </p>
+            </div>
+
+            {% include 'components/flash_messages.html' %}
+
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="list-group mb-4">
+                    {% for company in companies %}
+                    <label class="list-group-item list-group-item-action d-flex align-items-center py-3"
+                           style="cursor: pointer;">
+                        <input type="radio" name="company_id" value="{{ company.EmployeerId }}"
+                               class="form-check-input me-3 flex-shrink-0"
+                               {% if companies|length == 1 %}checked{% endif %}
+                               required>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">{{ company.EmployeerName }}</div>
+                            {% if company.EmployeerFiscalCode %}
+                            <small class="text-muted">{{ company.EmployeerFiscalCode }}</small>
+                            {% endif %}
+                        </div>
+                        <i class="bi bi-building text-primary fs-4"></i>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>{{ _('Accedi') }}
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-3">
+                <a href="{{ url_for('auth.logout') }}" class="text-muted text-decoration-none">
+                    <i class="bi bi-box-arrow-left me-1"></i>{{ _('Logout') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

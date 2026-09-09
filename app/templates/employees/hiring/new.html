@@ -468,9 +468,21 @@ function validateCnp() {
             // Check if existing employee
             if (data.existing) {
                 let html = `<p class="fw-bold">${data.employee_name} (ID: ${data.employee_id})</p>`;
-                html += '<h6>Storico contratti:</h6><table class="table table-sm table-striped"><thead><tr><th>Societa</th><th>Assunzione</th><th>Fine</th></tr></thead><tbody>';
+
+                // Warning: active in another company
+                if (data.active_in_other_company) {
+                    html += `<div class="alert alert-warning border-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>ATTENZIONE:</strong> Questa persona ha un contratto ATTIVO presso:
+                        <strong>${data.active_other_company_names.join(', ')}</strong>
+                    </div>`;
+                }
+
+                html += '<h6>Storico contratti:</h6><table class="table table-sm table-striped"><thead><tr><th>Societa</th><th>Assunzione</th><th>Fine</th><th>Stato</th></tr></thead><tbody>';
                 data.contracts.forEach(c => {
-                    html += `<tr><td>${c.company}</td><td>${c.hire_date}</td><td>${c.end_date}</td></tr>`;
+                    const rowClass = c.is_active ? 'table-success' : '';
+                    const badge = c.is_active ? '<span class="badge bg-success">Attivo</span>' : '<span class="badge bg-secondary">Chiuso</span>';
+                    html += `<tr class="${rowClass}"><td>${c.company}</td><td>${c.hire_date}</td><td>${c.end_date}</td><td>${badge}</td></tr>`;
                 });
                 html += '</tbody></table>';
                 if (data.disciplinary_count > 0) {

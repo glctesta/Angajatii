@@ -13,6 +13,14 @@
             </div>
         </form>
 
+        <!-- Current Company -->
+        {% if session.get('current_company_name') %}
+        <a href="{{ url_for('auth.select_company') }}" class="btn btn-outline-primary btn-sm me-3 d-none d-md-inline-flex align-items-center" title="{{ _('Cambia societa') }}">
+            <i class="bi bi-building me-1"></i>
+            <span class="fw-semibold">{{ session['current_company_name'] }}</span>
+        </a>
+        {% endif %}
+
         <div class="d-flex align-items-center">
             <!-- Theme Toggle -->
             <button id="theme-toggle" class="btn btn-outline-secondary rounded-circle me-3" title="{{ _('Toggle Dark/Light Mode') }}">

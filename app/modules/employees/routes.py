@@ -507,11 +507,26 @@ def api_validate_cnp():
                 EmployeeHireHistory.EmployeeId == existing.EmployeeId
             ).order_by(EmployeeHireHistory.HireDate.desc()).all()
 
-            result['contracts'] = [{
-                'company': emp.EmployeerName,
-                'hire_date': c.HireDate.strftime('%d/%m/%Y') if c.HireDate else '-',
-                'end_date': c.EndWorkDate.strftime('%d/%m/%Y') if c.EndWorkDate else 'Attivo',
-            } for c, emp in contracts]
+            result['contracts'] = []
+            active_other_companies = []
+            current_company_id = session.get('current_company_id')
+
+            for c, emp in contracts:
+                is_active = c.EndWorkDate is None
+                contract_info = {
+                    'company': emp.EmployeerName,
+                    'company_id': emp.EmployeerId,
+                    'hire_date': c.HireDate.strftime('%d/%m/%Y') if c.HireDate else '-',
+                    'end_date': c.EndWorkDate.strftime('%d/%m/%Y') if c.EndWorkDate else 'Attivo',
+                    'is_active': is_active,
+                }
+                result['contracts'].append(contract_info)
+                # Track active contracts in OTHER companies
+                if is_active and current_company_id and emp.EmployeerId != current_company_id:
+                    active_other_companies.append(emp.EmployeerName)
+
+            result['active_in_other_company'] = len(active_other_companies) > 0
+            result['active_other_company_names'] = active_other_companies
 
             disc_count = db.session.query(EmployeeDisciplinaryHistory).join(
                 EmployeeHireHistory,

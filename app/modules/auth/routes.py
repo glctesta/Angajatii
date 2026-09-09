@@ -31,6 +31,8 @@ def validate_password_strength(password):
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        if 'current_company_id' not in session:
+            return redirect(url_for('auth.select_company'))
         return redirect(url_for('dashboard.index'))
         
     form = LoginForm()
@@ -51,9 +53,9 @@ def login():
                 
                 if user.MustChangePassword:
                     return redirect(url_for('auth.change_password'))
-                    
-                next_page = request.args.get('next')
-                return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
+
+                # Redirect to company selection
+                return redirect(url_for('auth.select_company'))
             else:
                 user.record_failed_login()
                 db.session.commit()
@@ -62,11 +64,59 @@ def login():
         
     return render_template('auth/login.html', form=form)
 
+
+@auth_bp.route('/select-company', methods=['GET', 'POST'])
+@login_required
+def select_company():
+    """Select which company to work with for this session."""
+    from app.models.organization import Employeer
+    from app.models.employee import EmployeeHireHistory
+
+    # Get accessible companies
+    if current_user.can_see_all_companies:
+        companies = db.session.query(Employeer).filter(
+            Employeer.DateOut.is_(None)
+        ).order_by(Employeer.EmployeerName).all()
+    else:
+        company_ids = current_user.get_accessible_company_ids()
+        if not company_ids:
+            flash(_('Nessuna societa assegnata. Contattare l\'amministratore.'), 'error')
+            return redirect(url_for('auth.login'))
+        companies = db.session.query(Employeer).filter(
+            Employeer.EmployeerId.in_(company_ids),
+            Employeer.DateOut.is_(None)
+        ).order_by(Employeer.EmployeerName).all()
+
+    # Auto-select if only one company
+    if len(companies) == 1:
+        session['current_company_id'] = companies[0].EmployeerId
+        session['current_company_name'] = companies[0].EmployeerName
+        next_page = request.args.get('next')
+        return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
+
+    if request.method == 'POST':
+        company_id = request.form.get('company_id')
+        if company_id:
+            company_id = int(company_id)
+            # Verify access
+            allowed_ids = [c.EmployeerId for c in companies]
+            if company_id in allowed_ids:
+                company = next(c for c in companies if c.EmployeerId == company_id)
+                session['current_company_id'] = company_id
+                session['current_company_name'] = company.EmployeerName
+                log_action(current_user.UserId, f'SELECT_COMPANY:{company.EmployeerName}', 'auth')
+                next_page = request.args.get('next')
+                return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
+
+    return render_template('auth/select_company.html', companies=companies)
+
 @auth_bp.route('/logout')
 @login_required
 def logout():
     log_action(current_user.UserId, 'LOGOUT', 'auth')
     logout_user()
+    session.pop('current_company_id', None)
+    session.pop('current_company_name', None)
     flash(_('Sei stato disconnesso.'), 'info')
     return redirect(url_for('auth.login'))
 
