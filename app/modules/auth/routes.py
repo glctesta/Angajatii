@@ -142,16 +142,18 @@ def forgot_password():
             token = PasswordResetToken.generate_token(user.UserId, db.session)
             
             try:
-                sender = EmailSender('email_key.key', 'email_credentials.enc')
+                sender = EmailSender()
                 reset_url = url_for('auth.reset_password', token=token, _external=True)
                 sender.send_email(
-                    to=user.Email,
+                    to_email=user.Email,
                     subject=_('Ripristino Password'),
-                    body=f"Usa questo link per reimpostare la tua password: {reset_url}"
+                    body=f"Usa questo link per reimpostare la tua password:\n\n{reset_url}\n\nIl link scade tra 1 ora."
                 )
                 log_action(user.UserId, 'PASSWORD_RESET_REQUEST', 'auth')
+                current_app.logger.info(f"Password reset email sent to {user.Email}")
             except Exception as e:
                 current_app.logger.error(f"Failed to send reset email: {e}")
+                flash(_('Errore nell\'invio dell\'email. Contattare l\'amministratore.'), 'warning')
                 
         flash(_("Se l'account esiste, è stata inviata un'email con il link per reimpostare la password."), 'info')
         return redirect(url_for('auth.login'))
@@ -201,15 +203,16 @@ def forgot_username():
         
         if user and user.Email:
             try:
-                sender = EmailSender('email_key.key', 'email_credentials.enc')
+                sender = EmailSender()
                 sender.send_email(
-                    to=user.Email,
+                    to_email=user.Email,
                     subject=_('Recupero Username'),
-                    body=f"Il tuo username è: {user.Username}"
+                    body=f"Il tuo username e': {user.Username}"
                 )
                 log_action(user.UserId, 'USERNAME_RECOVERY', 'auth')
             except Exception as e:
                 current_app.logger.error(f"Failed to send username recovery email: {e}")
+                flash(_('Errore nell\'invio dell\'email. Contattare l\'amministratore.'), 'warning')
                 
         flash(_("Se l'email esiste nei nostri sistemi, ti abbiamo inviato il tuo username."), 'info')
         return redirect(url_for('auth.login'))
