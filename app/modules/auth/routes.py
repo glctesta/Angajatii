@@ -143,7 +143,9 @@ def forgot_password():
             
             try:
                 sender = EmailSender()
-                reset_url = url_for('auth.reset_password', token=token, _external=True)
+                base_url = current_app.config.get('APP_BASE_URL', 'http://localhost:5050')
+                reset_path = url_for('auth.reset_password', token=token)
+                reset_url = f"{base_url}{reset_path}"
                 sender.send_email(
                     to_email=user.Email,
                     subject=_('Ripristino Password'),

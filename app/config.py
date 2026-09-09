@@ -86,6 +86,9 @@ class Config:
     MAX_LOGIN_ATTEMPTS = 5
     LOCKOUT_DURATION_MINUTES = 15
 
+    # External URL (for emails with links)
+    APP_BASE_URL = os.environ.get('APP_BASE_URL', 'http://localhost:5050')
+
     # Password reset
     PASSWORD_RESET_EXPIRY_HOURS = 1
 
