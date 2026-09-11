@@ -15,10 +15,17 @@
 
         <!-- Current Company -->
         {% if session.get('current_company_name') %}
-        <a href="{{ url_for('auth.select_company') }}" class="btn btn-outline-primary btn-sm me-3 d-none d-md-inline-flex align-items-center" title="{{ _('Cambia societa') }}">
-            <i class="bi bi-building me-1"></i>
-            <span class="fw-semibold">{{ session['current_company_name'] }}</span>
-        </a>
+            {% if current_user.can_see_all_companies or current_user.has_any_role('admin', 'hr') %}
+            <a href="{{ url_for('auth.select_company') }}" class="btn btn-outline-primary btn-sm me-3 d-none d-md-inline-flex align-items-center" title="{{ _('Cambia societa') }}">
+                <i class="bi bi-building me-1"></i>
+                <span class="fw-semibold">{{ session['current_company_name'] }}</span>
+                <i class="bi bi-chevron-down ms-1" style="font-size: 0.7rem;"></i>
+            </a>
+            {% else %}
+            <span class="badge bg-primary me-3 d-none d-md-inline-flex align-items-center py-2 px-3">
+                <i class="bi bi-building me-1"></i>{{ session['current_company_name'] }}
+            </span>
+            {% endif %}
         {% endif %}
 
         <div class="d-flex align-items-center">

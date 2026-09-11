@@ -68,9 +68,20 @@ def login():
 @auth_bp.route('/select-company', methods=['GET', 'POST'])
 @login_required
 def select_company():
-    """Select which company to work with for this session."""
+    """Select which company to work with for this session.
+    First login: always shown.
+    After that: only admin/HR can change.
+    """
     from app.models.organization import Employeer
     from app.models.employee import EmployeeHireHistory
+
+    # If company already selected and user is NOT admin/HR, deny change
+    already_selected = 'current_company_id' in session
+    can_change = current_user.can_see_all_companies or current_user.has_any_role('admin', 'hr')
+
+    if already_selected and not can_change:
+        flash(_('Solo Admin e HR possono cambiare societa.'), 'warning')
+        return redirect(url_for('dashboard.index'))
 
     # Get accessible companies
     if current_user.can_see_all_companies:

@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, session
 from flask_login import login_required, current_user
 from flask_babel import _
 from . import employees_bp
@@ -10,26 +10,20 @@ from sqlalchemy import func
 @employees_bp.route('/')
 @login_required
 def index():
-    """Employee list with search, company filter, pagination and access control."""
+    """Employee list filtered by session company, with search and pagination."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 25, type=int)
     search = request.args.get('q', '', type=str).strip()
     status = request.args.get('status', 'active', type=str)
-    company_id = request.args.get('company', 0, type=int)
     show_not_valid = request.args.get('show_nv', '0', type=str) == '1'
 
-    # --- Company access control ---
-    accessible_ids = current_user.get_accessible_company_ids()
-    can_see_all = current_user.can_see_all_companies
+    # Get current company from session
+    current_company_id = session.get('current_company_id')
+    current_company_name = session.get('current_company_name', '')
 
-    # If user has no linked employee and is not admin, show empty
-    if not can_see_all and not accessible_ids:
-        return render_template(
-            'employees/index.html',
-            employees=[], pagination=None, search='', status=status,
-            company_id=0, companies=[], show_not_valid=False,
-            can_see_all=False,
-        )
+    if not current_company_id:
+        flash(_('Seleziona prima una societa.'), 'warning')
+        return redirect(url_for('auth.select_company'))
 
     query = db.session.query(Employee).order_by(Employee.EmployeeSurname, Employee.EmployeeName)
 
@@ -50,47 +44,27 @@ def index():
             )
         )
 
-    # Company filter: explicit selection or access restriction
-    effective_company_ids = None
-    if company_id:
-        # User selected a specific company
-        if not can_see_all and company_id not in accessible_ids:
-            company_id = 0  # Reset if not accessible
-        else:
-            effective_company_ids = [company_id]
-    
-    if not effective_company_ids and not can_see_all and accessible_ids:
-        # Restrict to user's accessible companies
-        effective_company_ids = accessible_ids
-
-    if effective_company_ids:
-        query = query.filter(
-            Employee.hire_history.any(
-                EmployeeHireHistory.EmployeerId.in_(effective_company_ids)
-            )
-        )
+    # Always filter by session company
+    company_filter = EmployeeHireHistory.EmployeerId == current_company_id
 
     # Status filter
     if status == 'active':
-        active_filter = EmployeeHireHistory.EndWorkDate.is_(None)
-        if effective_company_ids:
-            active_filter = db.and_(active_filter, EmployeeHireHistory.EmployeerId.in_(effective_company_ids))
-        query = query.filter(Employee.hire_history.any(active_filter))
+        query = query.filter(Employee.hire_history.any(
+            db.and_(company_filter, EmployeeHireHistory.EndWorkDate.is_(None))
+        ))
     elif status == 'inactive':
-        active_filter = EmployeeHireHistory.EndWorkDate.is_(None)
-        if effective_company_ids:
-            active_filter = db.and_(active_filter, EmployeeHireHistory.EmployeerId.in_(effective_company_ids))
-        query = query.filter(~Employee.hire_history.any(active_filter))
+        # Has history with this company but NO active contract
+        query = query.filter(
+            Employee.hire_history.any(company_filter),
+            ~Employee.hire_history.any(
+                db.and_(company_filter, EmployeeHireHistory.EndWorkDate.is_(None))
+            )
+        )
+    else:
+        # All - just filter by company
+        query = query.filter(Employee.hire_history.any(company_filter))
 
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-
-    # Get companies for filter dropdown (only accessible ones for non-admin)
-    if can_see_all:
-        companies = db.session.query(Employeer).order_by(Employeer.EmployeerName).all()
-    else:
-        companies = db.session.query(Employeer).filter(
-            Employeer.EmployeerId.in_(accessible_ids)
-        ).order_by(Employeer.EmployeerName).all()
 
     return render_template(
         'employees/index.html',
@@ -98,10 +72,8 @@ def index():
         pagination=pagination,
         search=search,
         status=status,
-        company_id=company_id,
-        companies=companies,
         show_not_valid=show_not_valid,
-        can_see_all=can_see_all,
+        current_company_name=current_company_name,
     )
 
 
@@ -111,17 +83,16 @@ def detail(id):
     """Employee detail card."""
     employee = db.session.query(Employee).get_or_404(id)
 
-    # Access control: non-admin users can only see employees from their companies
-    if not current_user.can_see_all_companies:
-        accessible_ids = current_user.get_accessible_company_ids()
-        if accessible_ids:
-            has_access = db.session.query(EmployeeHireHistory).filter(
-                EmployeeHireHistory.EmployeeId == id,
-                EmployeeHireHistory.EmployeerId.in_(accessible_ids)
-            ).first()
-            if not has_access:
-                flash(_('Non hai accesso a questo dipendente.'), 'error')
-                return redirect(url_for('employees.index'))
+    # Access control: employee must have history with session company
+    current_company_id = session.get('current_company_id')
+    if current_company_id:
+        has_access = db.session.query(EmployeeHireHistory).filter(
+            EmployeeHireHistory.EmployeeId == id,
+            EmployeeHireHistory.EmployeerId == current_company_id
+        ).first()
+        if not has_access:
+            flash(_('Questo dipendente non appartiene alla societa corrente.'), 'error')
+            return redirect(url_for('employees.index'))
     
     # Get all contracts with company info
     contracts = db.session.query(
@@ -294,7 +265,7 @@ def hiring_new():
                 # Children
                 'children': children,
                 # Contract
-                'employeer_id': int(request.form.get('employeer_id') or 0),
+                'employeer_id': session.get('current_company_id', 0),
                 'contract_type_id': int(request.form.get('contract_type_id') or 0),
                 'hire_date': hire_date,
                 'start_work_date': start_work_date,
@@ -402,9 +373,6 @@ def hiring_new():
 
     # GET: Load all dropdown data
     from app.models import Nation
-    companies = db.session.query(Employeer).filter(
-        Employeer.DateOut.is_(None)
-    ).order_by(Employeer.EmployeerName).all()
 
     contract_types = db.session.query(ContractType).all()
     cost_centers = db.session.query(CostCenter).order_by(CostCenter.CdcDescription).all()
@@ -417,7 +385,7 @@ def hiring_new():
 
     return render_template(
         'employees/hiring/new.html',
-        companies=companies,
+        current_company_name=session.get('current_company_name', ''),
         contract_types=contract_types,
         cost_centers=cost_centers,
         doc_types=doc_types,
